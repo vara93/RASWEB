@@ -308,4 +308,4 @@ def require_roles(*allowed_roles: str):
             raise HTTPException(status_code=403, detail="Недостаточно прав")
         return user
 
-    return Depends(_dependency)
+    return _dependency

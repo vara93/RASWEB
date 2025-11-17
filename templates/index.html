@@ -500,8 +500,20 @@
     let webPublications = [];
     let webPublicationsMap = {};
     let currentInfobases = [];
-    let currentUser = { roles: [] };
     let groupConfig = null;
+
+    let currentUser = { roles: [] };
+    (function preloadUserFromStorage() {
+        try {
+            const stored = localStorage.getItem('rasCurrentUser');
+            if (stored) {
+                currentUser = JSON.parse(stored);
+                updateUserBadge();
+            }
+        } catch (err) {
+            console.warn('Не удалось загрузить пользователя из localStorage', err);
+        }
+    })();
 
     function updateUserBadge() {
         const pill = document.getElementById('user-pill');
@@ -522,6 +534,7 @@
             localStorage.setItem('rasAuthToken', token);
         } else {
             localStorage.removeItem('rasAuthToken');
+            localStorage.removeItem('rasCurrentUser');
         }
     }
 
@@ -538,11 +551,28 @@
     }
 
     async function loadCurrentUser() {
+        let usedStored = false;
         try {
-            currentUser = await fetchJSON('/auth/me');
+            const stored = localStorage.getItem('rasCurrentUser');
+            if (stored) {
+                currentUser = JSON.parse(stored);
+                usedStored = true;
+                updateUserBadge();
+            }
+        } catch (err) {
+            console.warn('Не удалось прочитать сохраненного пользователя', err);
+        }
+
+        try {
+            const fetched = await fetchJSON('/auth/me');
+            currentUser = fetched;
+            localStorage.setItem('rasCurrentUser', JSON.stringify(fetched));
         } catch (err) {
             console.error('Не удалось получить данные пользователя', err);
-            currentUser = { user: 'anonymous', roles: ['Read'] };
+            if (!usedStored) {
+                currentUser = { user: 'anonymous', roles: ['Read'] };
+                localStorage.removeItem('rasCurrentUser');
+            }
         }
         updateUserBadge();
     }
@@ -931,7 +961,7 @@
                         <svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-4 w-4\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M4.5 4.5v6h6m9-3a9 9 0 11-9-9\" /></svg>
                         Перезапустить
                     </button>`
-                : '<span class="text-xs text-slate-400">Недоступно</span>';
+                : '<span class="inline-block h-2.5 w-2.5 rounded-full bg-slate-300" title="Нет доступа"></span>';
             return `<tr class="hover:bg-slate-50 transition-colors" data-unit="${svc.id}">
                 <td class="px-4 py-3 text-sm text-slate-800 font-medium">${svc.display_name}<div class="text-xs text-slate-500">${svc.id}</div></td>
                 <td class="px-4 py-3 text-sm text-slate-700">${svc.category}</td>
@@ -1316,6 +1346,11 @@
                 }
                 setAuthToken(data.token);
                 currentUser = data.user || {};
+                try {
+                    localStorage.setItem('rasCurrentUser', JSON.stringify(currentUser));
+                } catch (err) {
+                    console.warn('Не удалось сохранить пользователя', err);
+                }
                 updateUserBadge();
                 closeLoginModal();
                 await loadData();

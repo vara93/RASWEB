@@ -140,7 +140,7 @@ async def auth_groups_update(
 
 
 @app.get("/api/cluster")
-async def api_cluster(user: UserContext = require_roles("Admin", "Support", "Read")) -> Dict:
+async def api_cluster(user: UserContext = Depends(require_roles("Admin", "Support", "Read"))) -> Dict:
     try:
         info = ras_client.get_cluster_info()
         return {"cluster": info}
@@ -151,7 +151,7 @@ async def api_cluster(user: UserContext = require_roles("Admin", "Support", "Rea
 
 @app.get("/api/infobases")
 async def api_infobases(
-    user: UserContext = require_roles("Admin", "Support", "Read"),
+    user: UserContext = Depends(require_roles("Admin", "Support", "Read")),
 ) -> Dict[str, List[Dict[str, str]]]:
     try:
         infobases = ras_client.get_infobases()
@@ -174,7 +174,7 @@ async def api_infobases(
 async def api_sessions(
     user: str | None = Query(default=None),
     infobase: str | None = Query(default=None),
-    current_user: UserContext = require_roles("Admin", "Support", "Read"),
+    current_user: UserContext = Depends(require_roles("Admin", "Support", "Read")),
 ) -> Dict[str, List[Dict[str, str]]]:
     try:
         return {"sessions": ras_client.get_sessions(user=user, infobase=infobase)}
@@ -185,7 +185,7 @@ async def api_sessions(
 
 @app.get("/api/processes")
 async def api_processes(
-    user: UserContext = require_roles("Admin", "Support", "Read"),
+    user: UserContext = Depends(require_roles("Admin", "Support", "Read")),
 ) -> Dict[str, List[Dict[str, str]]]:
     try:
         return {"processes": ras_client.get_processes()}
@@ -196,7 +196,7 @@ async def api_processes(
 
 @app.get("/api/connections")
 async def api_connections(
-    user: UserContext = require_roles("Admin", "Support", "Read"),
+    user: UserContext = Depends(require_roles("Admin", "Support", "Read")),
 ) -> Dict[str, List[Dict[str, str]]]:
     try:
         return {"connections": ras_client.get_connections()}
@@ -207,7 +207,7 @@ async def api_connections(
 
 @app.get("/api/locks")
 async def api_locks(
-    user: UserContext = require_roles("Admin", "Support", "Read"),
+    user: UserContext = Depends(require_roles("Admin", "Support", "Read")),
 ) -> Dict[str, List[Dict[str, str]]]:
     try:
         return {"locks": ras_client.get_locks()}
@@ -218,7 +218,7 @@ async def api_locks(
 
 @app.get("/api/licenses")
 async def api_licenses(
-    user: UserContext = require_roles("Admin", "Support", "Read"),
+    user: UserContext = Depends(require_roles("Admin", "Support", "Read")),
 ) -> Dict[str, List[Dict[str, str]]]:
     try:
         return {"licenses": ras_client.get_licenses()}
@@ -229,7 +229,7 @@ async def api_licenses(
 
 @app.get("/api/monitoring/summary")
 async def api_monitoring_summary(
-    user: UserContext = require_roles("Admin", "Support", "Read"),
+    user: UserContext = Depends(require_roles("Admin", "Support", "Read")),
 ) -> Dict[str, Dict[str, object]]:
     logger.info("Fetching monitoring summary")
     return {
@@ -241,7 +241,7 @@ async def api_monitoring_summary(
 
 @app.get("/api/monitoring/services")
 async def api_monitoring_services(
-    user: UserContext = require_roles("Admin", "Support", "Read"),
+    user: UserContext = Depends(require_roles("Admin", "Support", "Read")),
 ) -> Dict[str, List[Dict[str, object]]]:
     logger.info("Listing services for monitoring")
     services = monitoring.detect_services()
@@ -260,7 +260,7 @@ async def api_monitoring_services(
 
 @app.post("/api/monitoring/services/{unit_name}/restart")
 async def api_restart_service(
-    unit_name: str, user: UserContext = require_roles("Admin", "Support")
+    unit_name: str, user: UserContext = Depends(require_roles("Admin", "Support"))
 ) -> Dict[str, object]:
     logger.warning("Restart requested for service: %s", unit_name)
     result = monitoring.restart_service(unit_name)
@@ -272,7 +272,7 @@ async def api_restart_service(
 
 @app.get("/api/webpublications")
 async def api_web_publications(
-    user: UserContext = require_roles("Admin", "Support", "Read"),
+    user: UserContext = Depends(require_roles("Admin", "Support", "Read")),
 ) -> Dict[str, List[Dict[str, object]]]:
     logger.info("Listing web publications")
     pubs = web_publish.list_publications()
@@ -281,7 +281,7 @@ async def api_web_publications(
 
 @app.post("/api/webpublications/{name}/sso/enable")
 async def api_enable_sso(
-    name: str, user: UserContext = require_roles("Admin", "Support")
+    name: str, user: UserContext = Depends(require_roles("Admin", "Support"))
 ) -> Dict[str, object]:
     logger.info("Enable SSO requested for publication: %s", name)
     try:
@@ -298,7 +298,7 @@ async def api_enable_sso(
 
 @app.post("/api/webpublications/{name}/sso/disable")
 async def api_disable_sso(
-    name: str, user: UserContext = require_roles("Admin", "Support")
+    name: str, user: UserContext = Depends(require_roles("Admin", "Support"))
 ) -> Dict[str, object]:
     logger.info("Disable SSO requested for publication: %s", name)
     try:
@@ -315,7 +315,7 @@ async def api_disable_sso(
 
 @app.post("/api/infobases/{name}/publish")
 async def api_publish_infobase(
-    name: str, user: UserContext = require_roles("Admin")
+    name: str, user: UserContext = Depends(require_roles("Admin"))
 ) -> Dict[str, object]:
     logger.info("Publish request for infobase: %s", name)
     if web_publish.is_infobase_published(name):
@@ -348,7 +348,7 @@ async def api_publish_infobase(
 
 @app.delete("/api/webpublications/{name}")
 async def api_delete_publication(
-    name: str, user: UserContext = require_roles("Admin")
+    name: str, user: UserContext = Depends(require_roles("Admin"))
 ) -> Dict[str, object]:
     logger.info("Delete publication requested for: %s", name)
     try:
@@ -364,7 +364,7 @@ async def api_delete_publication(
 async def api_service_logs(
     unit_name: str,
     lines: int = Query(default=100, ge=10, le=500),
-    user: UserContext = require_roles("Admin", "Support", "Read"),
+    user: UserContext = Depends(require_roles("Admin", "Support", "Read")),
 ) -> Dict[str, List[str]]:
     logger.info("Fetching logs for service %s (lines=%s)", unit_name, lines)
     logs = monitoring.get_service_logs(unit_name, lines=lines)
@@ -372,7 +372,7 @@ async def api_service_logs(
 
 
 @app.get("/health")
-async def health(user: UserContext = require_roles("Admin", "Support", "Read")) -> Dict:
+async def health(user: UserContext = Depends(require_roles("Admin", "Support", "Read"))) -> Dict:
     status = "ok"
     details = {}
     try:
