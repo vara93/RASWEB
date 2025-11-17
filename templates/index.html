@@ -208,37 +208,26 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
-                    <div class="xl:col-span-2 bg-white rounded-xl p-6 shadow hover:shadow-lg transition-all">
-                        <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-200">
-                            <h3 class="text-xl font-semibold text-slate-800">Сервисы</h3>
-                            <div class="text-sm text-slate-500" id="services-meta">—</div>
-                        </div>
-                        <div class="overflow-hidden border border-slate-200 rounded-xl">
-                            <div class="overflow-auto max-h-[480px]">
-                                <table class="min-w-full divide-y divide-slate-200">
-                                    <thead class="bg-slate-50 sticky top-0">
-                                        <tr>
-                                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Имя</th>
-                                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Категория</th>
-                                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Порт</th>
-                                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Статус</th>
-                                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Автозапуск</th>
-                                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Действия</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="services-body" class="divide-y divide-slate-100 bg-white"></tbody>
-                                </table>
-                            </div>
-                        </div>
+                <div class="bg-white rounded-xl p-6 shadow hover:shadow-lg transition-all">
+                    <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-200">
+                        <h3 class="text-xl font-semibold text-slate-800">Сервисы</h3>
+                        <div class="text-sm text-slate-500" id="services-meta">—</div>
                     </div>
-                    <div class="bg-white rounded-xl p-6 shadow hover:shadow-lg transition-all flex flex-col">
-                        <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-200">
-                            <h3 class="text-xl font-semibold text-slate-800">Логи сервиса</h3>
-                            <div class="text-sm text-slate-500" id="logs-meta">—</div>
-                        </div>
-                        <div class="flex-1 overflow-hidden border border-slate-200 rounded-xl bg-slate-50">
-                            <pre id="service-logs" class="h-full max-h-[520px] overflow-auto p-4 text-xs text-slate-800 font-mono whitespace-pre-wrap"></pre>
+                    <div class="overflow-hidden border border-slate-200 rounded-xl">
+                        <div class="overflow-auto max-h-[480px]">
+                            <table class="min-w-full divide-y divide-slate-200">
+                                <thead class="bg-slate-50 sticky top-0">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Имя</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Категория</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Порт</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Статус</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Автозапуск</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Действия</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="services-body" class="divide-y divide-slate-100 bg-white"></tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
@@ -394,6 +383,7 @@
 </div>
 
 <script>
+    document.addEventListener('DOMContentLoaded', () => {
     async function fetchJSON(url) {
         const res = await fetch(url);
         if (!res.ok) throw new Error(`Request failed: ${res.status}`);
@@ -438,17 +428,23 @@
             const enabledBadge = svc.enabled
                 ? '<span class="px-2 py-1 text-xs rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100">Вкл</span>'
                 : '<span class="px-2 py-1 text-xs rounded-lg bg-slate-100 text-slate-600 border border-slate-200">Выкл</span>';
-            return `<tr class="hover:bg-slate-50 transition-colors cursor-pointer" data-unit="${svc.id}">
+            return `<tr class="hover:bg-slate-50 transition-colors" data-unit="${svc.id}">
                 <td class="px-4 py-3 text-sm text-slate-800 font-medium">${svc.display_name}<div class="text-xs text-slate-500">${svc.id}</div></td>
                 <td class="px-4 py-3 text-sm text-slate-700">${svc.category}</td>
                 <td class="px-4 py-3 text-sm text-slate-700">${svc.port ?? '—'}</td>
                 <td class="px-4 py-3 text-sm">${statusBadge}</td>
                 <td class="px-4 py-3 text-sm">${enabledBadge}</td>
                 <td class="px-4 py-3 text-sm">
-                    <button class="restart-btn inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-900 text-white hover:bg-emerald-600 transition-all" data-unit="${svc.id}">
+                    <div class="flex flex-wrap gap-2">
+                        <button class="log-btn inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-100 text-slate-800 hover:bg-slate-200 transition-all" data-unit="${svc.id}" data-display="${svc.display_name}">
+                            <svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-4 w-4\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M3.75 4.5h16.5M3.75 9h16.5M3.75 13.5h8.25m-8.25 4.5h8.25\"/></svg>
+                            Лог
+                        </button>
+                        <button class="restart-btn inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-900 text-white hover:bg-emerald-600 transition-all" data-unit="${svc.id}">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 4.5v6h6m9-3a9 9 0 11-9-9" /></svg>
                         Перезапустить
-                    </button>
+                        </button>
+                    </div>
                 </td>
             </tr>`;
         }).join('');
@@ -495,6 +491,24 @@
     }
 
     let selectedService = null;
+    let selectedServiceName = '';
+
+    function openLogModal(unit, displayName) {
+        selectedService = unit;
+        selectedServiceName = displayName || unit;
+        const title = document.getElementById('log-service-title');
+        const pre = document.getElementById('modal-service-logs');
+        if (title) title.textContent = selectedServiceName;
+        if (pre) pre.textContent = 'Загрузка логов...';
+        const modal = document.getElementById('log-modal');
+        if (modal) modal.classList.remove('hidden');
+        loadServiceLogs(unit);
+    }
+
+    function closeLogModal() {
+        const modal = document.getElementById('log-modal');
+        if (modal) modal.classList.add('hidden');
+    }
 
     async function loadMonitoringSummary() {
         try {
@@ -526,17 +540,6 @@
             setText('services-meta', `${services.length} сервисов`);
             renderServicesTable(services);
 
-            document.querySelectorAll('#services-body tr').forEach(row => {
-                row.addEventListener('click', () => {
-                    const unit = row.getAttribute('data-unit');
-                    if (unit) {
-                        selectedService = unit;
-                        loadServiceLogs(unit);
-                        setText('logs-meta', unit);
-                    }
-                });
-            });
-
             document.querySelectorAll('.restart-btn').forEach(btn => {
                 btn.addEventListener('click', async (event) => {
                     event.stopPropagation();
@@ -561,6 +564,17 @@
                     }
                 });
             });
+
+            document.querySelectorAll('.log-btn').forEach(btn => {
+                btn.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    const unit = btn.getAttribute('data-unit');
+                    const name = btn.getAttribute('data-display') || unit;
+                    if (unit) {
+                        openLogModal(unit, name);
+                    }
+                });
+            });
         } catch (err) {
             console.error('Monitoring services error', err);
         }
@@ -569,13 +583,40 @@
     async function loadServiceLogs(unit) {
         try {
             const data = await fetchJSON(`/api/monitoring/services/${unit}/logs?lines=120`);
-            const pre = document.getElementById('service-logs');
+            const pre = document.getElementById('modal-service-logs');
             if (pre) {
                 pre.textContent = (data.logs || []).join('\n');
             }
         } catch (err) {
             console.error('Logs load error', err);
+            const pre = document.getElementById('modal-service-logs');
+            if (pre) {
+                pre.textContent = 'Не удалось загрузить логи.';
+            }
         }
+    }
+
+    const closeLogBtn = document.getElementById('close-log');
+    if (closeLogBtn) {
+        closeLogBtn.addEventListener('click', () => closeLogModal());
+    }
+
+    const refreshLogBtn = document.getElementById('refresh-log');
+    if (refreshLogBtn) {
+        refreshLogBtn.addEventListener('click', () => {
+            if (selectedService) {
+                loadServiceLogs(selectedService);
+            }
+        });
+    }
+
+    const logModal = document.getElementById('log-modal');
+    if (logModal) {
+        logModal.addEventListener('click', (e) => {
+            if (e.target === logModal) {
+                closeLogModal();
+            }
+        });
     }
 
     async function checkHealth() {
@@ -617,6 +658,32 @@
     loadMonitoringSummary();
     loadServices();
     setInterval(loadMonitoringSummary, 20000);
+    });
 </script>
+
+<!-- Log Modal -->
+<div id="log-modal" class="hidden fixed inset-0 z-30 bg-black/50 backdrop-blur-sm flex items-center justify-center px-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[80vh] overflow-hidden">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50">
+            <div>
+                <p class="text-xs uppercase tracking-wide text-slate-500">Логи сервиса</p>
+                <h4 id="log-service-title" class="text-lg font-semibold text-slate-900">—</h4>
+            </div>
+            <div class="flex items-center gap-2">
+                <button id="refresh-log" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-900 text-white hover:bg-emerald-600 transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 4.5v6h6m9-3a9 9 0 11-9-9"/></svg>
+                    Обновить
+                </button>
+                <button id="close-log" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-100 text-slate-800 hover:bg-slate-200 transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                    Закрыть
+                </button>
+            </div>
+        </div>
+        <div class="p-6 bg-slate-50 border-t border-slate-200">
+            <pre id="modal-service-logs" class="h-[60vh] overflow-auto text-xs text-slate-800 font-mono whitespace-pre-wrap bg-white rounded-xl border border-slate-200 p-4"></pre>
+        </div>
+    </div>
+</div>
 </body>
 </html>
