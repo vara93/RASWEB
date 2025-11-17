@@ -9,7 +9,7 @@ from typing import Dict, List
 
 from pydantic import BaseModel
 
-from fastapi import Depends, FastAPI, HTTPException, Query, Body
+from fastapi import Body, Depends, FastAPI, HTTPException, Query
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi import Request
@@ -21,6 +21,7 @@ from auth import (
     UserContext,
     authenticate_basic,
     get_current_user,
+    ldap_status,
     require_roles,
     get_group_config,
     update_group_config,
@@ -118,7 +119,8 @@ async def auth_login(
 
 class GroupUpdate(BaseModel):
     role: str
-    groups: List[str]
+    groups: List[str] | None = None
+    users: List[str] | None = None
 
 
 @app.get("/auth/groups")
@@ -135,8 +137,18 @@ async def auth_groups_update(
     payload: GroupUpdate,
     user: UserContext = Depends(require_roles("Admin")),
 ) -> Dict[str, object]:
-    cfg = update_group_config(payload.role, payload.groups)
+    cfg = update_group_config(payload.role, payload.groups, payload.users)
     return {"success": True, "config": cfg}
+
+
+@app.get("/auth/ldap/status")
+async def auth_ldap_status(
+    user: str | None = Query(default=None, description="sAMAccountName или UPN"),
+    ctx: UserContext = Depends(require_roles("Admin")),
+) -> Dict[str, object]:
+    """Return AD/LDAP connectivity + optional user lookup status."""
+
+    return ldap_status(user)
 
 
 @app.get("/api/cluster")

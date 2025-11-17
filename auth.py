@@ -22,6 +22,8 @@ LDAP_PORT = 389
 LDAP_BIND_DN = "svc_http1cv8@fd.local"
 LDAP_BIND_PASSWORD = "hg43f%Rfvc6FT%#7"
 LDAP_BASE_DN = "DC=fd,DC=local"
+LDAP_DEFAULT_DOMAIN = LDAP_BASE_DN.replace("DC=", "").replace(",", ".")
+LDAP_NETBIOS_DOMAIN = LDAP_DEFAULT_DOMAIN.split(".")[0].upper()
 
 BASE_DIR = Path(__file__).resolve().parent
 GROUP_CONFIG_PATH = BASE_DIR / "auth_groups.json"
@@ -42,27 +44,46 @@ SUPPORT_GROUPS = {"1c-ras-support"}
 READ_GROUPS = {"1c-ras-readonly"}
 
 
-def _load_custom_groups() -> dict:
-    """Load mutable group configuration from disk (lower-cased)."""
+def _default_custom() -> dict:
+    return {
+        "Admin": {"groups": [], "users": []},
+        "Support": {"groups": [], "users": []},
+        "Read": {"groups": [], "users": []},
+    }
 
-    default = {"Admin": [], "Support": [], "Read": []}
+
+def _load_custom_groups() -> dict:
+    """Load mutable group/user configuration from disk (lower-cased)."""
+
+    default = _default_custom()
     if not GROUP_CONFIG_PATH.exists():
         return default
     try:
         with GROUP_CONFIG_PATH.open("r", encoding="utf-8") as fh:
             data = json.load(fh)
-            return {
-                "Admin": [g.lower() for g in data.get("Admin", [])],
-                "Support": [g.lower() for g in data.get("Support", [])],
-                "Read": [g.lower() for g in data.get("Read", [])],
-            }
+
+        # Backward compatibility: old schema stored list of groups per role.
+        parsed: dict[str, dict[str, list[str]]] = _default_custom()
+        for role in ("Admin", "Support", "Read"):
+            value = data.get(role, {})
+            if isinstance(value, list):
+                parsed[role]["groups"] = [g.lower() for g in value]
+                parsed[role]["users"] = []
+            else:
+                parsed[role]["groups"] = [
+                    g.lower() for g in value.get("groups", []) if g
+                ]
+                parsed[role]["users"] = [
+                    u.lower() for u in value.get("users", []) if u
+                ]
+        return parsed
     except Exception as exc:  # pragma: no cover - defensive
         logger.error("Failed to load auth group config: %s", exc)
         return default
 
 
 def _save_custom_groups(config: dict) -> None:
-    """Persist custom groups configuration to disk."""
+    """Persist custom groups/users configuration to disk."""
 
     GROUP_CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
     with GROUP_CONFIG_PATH.open("w", encoding="utf-8") as fh:
@@ -70,34 +91,48 @@ def _save_custom_groups(config: dict) -> None:
 
 
 def get_group_config() -> dict:
-    """Return current group configuration (builtin, custom, effective)."""
+    """Return current group/user configuration (builtin, custom, effective)."""
 
     custom = _load_custom_groups()
     effective = {
-        "Admin": sorted({*ADMIN_GROUPS, *custom.get("Admin", [])}),
-        "Support": sorted({*SUPPORT_GROUPS, *custom.get("Support", [])}),
-        "Read": sorted({*READ_GROUPS, *custom.get("Read", [])}),
+        "Admin": {
+            "groups": sorted({*ADMIN_GROUPS, *custom.get("Admin", {}).get("groups", [])}),
+            "users": sorted(set(custom.get("Admin", {}).get("users", []))),
+        },
+        "Support": {
+            "groups": sorted({*SUPPORT_GROUPS, *custom.get("Support", {}).get("groups", [])}),
+            "users": sorted(set(custom.get("Support", {}).get("users", []))),
+        },
+        "Read": {
+            "groups": sorted({*READ_GROUPS, *custom.get("Read", {}).get("groups", [])}),
+            "users": sorted(set(custom.get("Read", {}).get("users", []))),
+        },
     }
     return {
         "builtin": {
-            "Admin": sorted(ADMIN_GROUPS),
-            "Support": sorted(SUPPORT_GROUPS),
-            "Read": sorted(READ_GROUPS),
+            "Admin": {"groups": sorted(ADMIN_GROUPS), "users": []},
+            "Support": {"groups": sorted(SUPPORT_GROUPS), "users": []},
+            "Read": {"groups": sorted(READ_GROUPS), "users": []},
         },
         "custom": custom,
         "effective": effective,
     }
 
 
-def update_group_config(role: str, groups: list[str]) -> dict:
-    """Update custom groups for a given role and persist."""
+def update_group_config(role: str, groups: list[str] | None, users: list[str] | None) -> dict:
+    """Update custom groups/users for a given role and persist."""
 
     role_key = role.capitalize()
     if role_key not in {"Admin", "Support", "Read"}:
         raise HTTPException(status_code=400, detail="Неизвестная роль")
 
     custom = _load_custom_groups()
-    custom[role_key] = [g.lower() for g in groups if g]
+    role_cfg = custom.get(role_key, _default_custom()[role_key])
+    if groups is not None:
+        role_cfg["groups"] = [g.lower() for g in groups if g]
+    if users is not None:
+        role_cfg["users"] = [u.lower() for u in users if u]
+    custom[role_key] = role_cfg
     _save_custom_groups(custom)
     return get_group_config()
 
@@ -124,6 +159,30 @@ def _normalize_remote_user(remote_user: str) -> tuple[str, str | None]:
         domain, user_part = remote_user.split("\\", 1)
         return user_part, domain
     return remote_user, None
+
+
+def _bind_candidates(username: str, domain: str | None) -> List[str]:
+    """Return possible LDAP principals for binding the user."""
+
+    # If the caller already provided a principal with domain, try it first.
+    if "@" in username or "\\" in username:
+        return [username]
+
+    candidates = [f"{username}@{LDAP_DEFAULT_DOMAIN}"]
+    netbios = (
+        (domain or LDAP_DEFAULT_DOMAIN).split(".")[0].upper()
+        if domain
+        else LDAP_NETBIOS_DOMAIN
+    )
+    candidates.append(f"{netbios}\\{username}")
+
+    seen: Set[str] = set()
+    unique: List[str] = []
+    for cand in candidates:
+        if cand not in seen:
+            unique.append(cand)
+            seen.add(cand)
+    return unique
 
 
 @lru_cache(maxsize=1)
@@ -162,6 +221,8 @@ def _fetch_groups(username: str, upn: str | None = None) -> List[str]:
         logger.error("LDAP search failed: %s", exc)
         raise HTTPException(status_code=500, detail="Ошибка запроса LDAP")
 
+    logger.info("LDAP search for %s returned %d entries", username, len(conn.entries))
+
     if not conn.entries:
         logger.warning("User %s not found in LDAP", username)
         return []
@@ -172,31 +233,107 @@ def _fetch_groups(username: str, upn: str | None = None) -> List[str]:
         match = re.search(r"CN=([^,]+)", str(dn))
         if match:
             groups.append(match.group(1))
+    logger.info("Groups resolved for %s: %s", username, groups)
     return groups
+
+
+def ldap_status(probe_user: str | None = None) -> dict:
+    """Perform a lightweight LDAP bind + optional user lookup to validate connectivity."""
+
+    server = _server()
+    result: dict[str, object] = {
+        "reachable": False,
+        "base_dn": LDAP_BASE_DN,
+        "default_domain": LDAP_DEFAULT_DOMAIN,
+        "netbios_domain": LDAP_NETBIOS_DOMAIN,
+        "probe_user": probe_user,
+        "entries": 0,
+        "user_found": None,
+        "message": "",
+    }
+
+    try:
+        conn = Connection(
+            server,
+            user=LDAP_BIND_DN,
+            password=LDAP_BIND_PASSWORD,
+            auto_bind=True,
+            receive_timeout=10,
+        )
+        result["reachable"] = True
+    except Exception as exc:  # pragma: no cover - network/auth issues
+        msg = f"LDAP bind failed: {exc}"
+        logger.error(msg)
+        result["message"] = msg
+        return result
+
+    if not probe_user:
+        result["message"] = "LDAP bind успешен"
+        return result
+
+    search_filter = (
+        "(&(objectClass=user)(|"
+        f"(sAMAccountName={probe_user})"
+        f"(userPrincipalName={probe_user})"
+        "))"
+    )
+
+    try:
+        conn.search(
+            search_base=LDAP_BASE_DN,
+            search_filter=search_filter,
+            attributes=["sAMAccountName", "userPrincipalName"],
+        )
+        result["entries"] = len(conn.entries)
+        result["user_found"] = bool(conn.entries)
+        result["message"] = (
+            "Пользователь найден" if conn.entries else "Пользователь не найден"
+        )
+        logger.info(
+            "LDAP probe for %s returned %d entries", probe_user, len(conn.entries)
+        )
+    except Exception as exc:  # pragma: no cover - defensive
+        msg = f"LDAP search failed: {exc}"
+        logger.error(msg)
+        result["message"] = msg
+
+    return result
 
 
 def _effective_role_sets() -> dict:
     cfg = _load_custom_groups()
     return {
-        "Admin": {"domain admins", "1c-ras-admins", *cfg.get("Admin", [])},
-        "Support": {"1c-ras-support", *cfg.get("Support", [])},
-        "Read": {"1c-ras-readonly", *cfg.get("Read", [])},
+        "Admin": {
+            "groups": {"domain admins", "1c-ras-admins", *cfg.get("Admin", {}).get("groups", [])},
+            "users": set(cfg.get("Admin", {}).get("users", [])),
+        },
+        "Support": {
+            "groups": {"1c-ras-support", *cfg.get("Support", {}).get("groups", [])},
+            "users": set(cfg.get("Support", {}).get("users", [])),
+        },
+        "Read": {
+            "groups": {"1c-ras-readonly", *cfg.get("Read", {}).get("groups", [])},
+            "users": set(cfg.get("Read", {}).get("users", [])),
+        },
     }
 
 
-def _roles_from_groups(groups: Iterable[str]) -> List[str]:
+def _roles_from_members(username: str, groups: Iterable[str]) -> List[str]:
+    username_l = username.lower()
     group_set: Set[str] = {g.lower() for g in groups}
     roles: Set[str] = set()
     effective = _effective_role_sets()
 
     for role, mapped in effective.items():
-        if mapped & group_set:
+        if username_l in mapped["users"]:
+            roles.add(role)
+        if mapped["groups"] & group_set:
             roles.add(role)
 
     if "domain admins" in group_set:
         roles.add("Admin")
 
-    return list(roles)
+    return sorted(roles)
 
 
 def authenticate_basic(username: str, password: str, gss_name: str | None = None) -> UserContext:
@@ -217,23 +354,53 @@ def authenticate_basic(username: str, password: str, gss_name: str | None = None
 
     server = _server()
     user_part = username
-    try:
-        Connection(
-            server,
-            user=user_part,
-            password=password,
-            auto_bind=True,
-            receive_timeout=10,
-        ).unbind()
-    except Exception as exc:  # pragma: no cover - network/auth issues
-        logger.warning("User basic auth failed for %s: %s", user_part, exc)
+    norm_user, domain = _normalize_remote_user(user_part)
+    candidates = _bind_candidates(norm_user, domain)
+    logger.info(
+        "Authenticating via LDAP bind: user=%s, gss_name=%s, principals=%s",
+        norm_user,
+        gss_name or "<none>",
+        candidates,
+    )
+
+    last_exc: Exception | None = None
+    bound_principal: str | None = None
+    for principal in candidates:
+        try:
+            Connection(
+                server,
+                user=principal,
+                password=password,
+                auto_bind=True,
+                receive_timeout=10,
+            ).unbind()
+            bound_principal = principal
+            break
+        except Exception as exc:  # pragma: no cover - network/auth issues
+            last_exc = exc
+            logger.warning("LDAP bind failed for %s using %s: %s", norm_user, principal, exc)
+
+    if not bound_principal:
+        logger.warning(
+            "User basic auth failed for %s after %d attempts: %s",
+            norm_user,
+            len(candidates),
+            last_exc,
+        )
         raise HTTPException(status_code=401, detail="Неверный логин или пароль")
 
-    norm_user, domain = _normalize_remote_user(user_part)
-    upn = f"{norm_user}@{domain}" if domain else f"{norm_user}@fd.local"
+    upn = f"{norm_user}@{domain or LDAP_DEFAULT_DOMAIN}"
+    logger.info(
+        "LDAP bind succeeded for %s; principal=%s, domain=%s, upn=%s",
+        norm_user,
+        bound_principal,
+        domain or "<none>",
+        upn,
+    )
     groups = _fetch_groups(norm_user, upn)
-    roles = _roles_from_groups(groups)
+    roles = _roles_from_members(norm_user, groups)
     if not roles:
+        logger.warning("User %s has no allowed roles; groups=%s", norm_user, groups)
         raise HTTPException(status_code=403, detail="Нет разрешенных ролей")
 
     return UserContext(
@@ -264,6 +431,7 @@ async def get_current_user(
             logger.error("Invalid Basic auth header: %s", exc)
             raise HTTPException(status_code=401, detail="Некорректные учетные данные")
 
+        logger.info("Basic auth header received for user=%s", user_part)
         return authenticate_basic(user_part, password, gss_name=gss_name)
 
     # Allow anonymous access when Apache/GSS headers are missing so the
@@ -280,12 +448,21 @@ async def get_current_user(
         )
 
     username, domain = _normalize_remote_user(remote_user)
-    upn = f"{username}@{domain}" if domain else f"{username}@fd.local"
+    logger.info(
+        "Resolving user from headers: remote_user=%s, gss_name=%s, domain=%s",
+        remote_user,
+        gss_name or "<none>",
+        domain or "<none>",
+    )
+    upn = f"{username}@{domain}" if domain else f"{username}@{LDAP_DEFAULT_DOMAIN}"
 
     groups = _fetch_groups(username, upn)
-    roles = _roles_from_groups(groups)
+    roles = _roles_from_members(username, groups)
 
     if not roles:
+        logger.warning(
+            "User %s has no allowed roles (header flow); groups=%s", username, groups
+        )
         raise HTTPException(status_code=403, detail="Нет разрешенных ролей")
 
     return UserContext(
