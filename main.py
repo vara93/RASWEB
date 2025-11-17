@@ -7,7 +7,7 @@ import logging
 import subprocess
 from typing import Dict, List
 
-from fastapi import Depends, FastAPI, HTTPException, Query
+from fastapi import Depends, FastAPI, HTTPException, Query, Body
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi import Request
@@ -15,7 +15,7 @@ from fastapi import Request
 import ras_client
 import monitoring
 import web_publish
-from auth import UserContext, get_current_user, require_roles
+from auth import UserContext, authenticate_basic, get_current_user, require_roles
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -66,6 +66,44 @@ async def auth_me(user: UserContext = Depends(get_current_user)) -> Dict[str, ob
         "gss_name": user.gss_name,
         "groups": user.groups,
         "roles": user.roles,
+    }
+
+
+@app.post("/auth/login")
+async def auth_login(
+    payload: Dict[str, str] = Body(...),
+) -> Dict[str, object]:
+    """Manual login endpoint for environments without SSO.
+
+    The client passes {"username": "user", "password": "pwd"}; the backend validates
+    using Basic auth flow in get_current_user and returns a token that should be reused
+    as Authorization: Basic <token> for subsequent requests.
+    """
+
+    username = payload.get("username")
+    password = payload.get("password")
+    if not username or not password:
+        raise HTTPException(status_code=400, detail="username/password required")
+
+    import base64
+
+    token = base64.b64encode(f"{username}:{password}".encode("utf-8")).decode("utf-8")
+
+    # Validate credentials and fetch roles
+    user_ctx = authenticate_basic(username, password)
+
+    return {
+        "success": True,
+        "message": "Аутентификация успешна",
+        "token": token,
+        "user": {
+            "user": user_ctx.username,
+            "domain": user_ctx.domain,
+            "remote_user": user_ctx.remote_user,
+            "gss_name": user_ctx.gss_name,
+            "groups": user_ctx.groups,
+            "roles": user_ctx.roles,
+        },
     }
 
 

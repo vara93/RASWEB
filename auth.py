@@ -1,6 +1,7 @@
 """Authentication and authorization helpers for Kerberos + AD roles."""
 from __future__ import annotations
 
+import base64
 import logging
 import re
 from dataclasses import dataclass
@@ -115,12 +116,59 @@ def _roles_from_groups(groups: Iterable[str]) -> List[str]:
     return list(roles)
 
 
+def authenticate_basic(username: str, password: str, gss_name: str | None = None) -> UserContext:
+    """Validate credentials via LDAP bind and return a populated user context."""
+
+    server = _server()
+    user_part = username
+    try:
+        Connection(
+            server,
+            user=user_part,
+            password=password,
+            auto_bind=True,
+            receive_timeout=10,
+        ).unbind()
+    except Exception as exc:  # pragma: no cover - network/auth issues
+        logger.warning("User basic auth failed for %s: %s", user_part, exc)
+        raise HTTPException(status_code=401, detail="Неверный логин или пароль")
+
+    norm_user, domain = _normalize_remote_user(user_part)
+    upn = f"{norm_user}@{domain}" if domain else f"{norm_user}@fd.local"
+    groups = _fetch_groups(norm_user, upn)
+    roles = _roles_from_groups(groups)
+    if not roles:
+        raise HTTPException(status_code=403, detail="Нет разрешенных ролей")
+
+    return UserContext(
+        username=norm_user,
+        domain=domain,
+        remote_user=user_part,
+        gss_name=gss_name,
+        groups=groups,
+        roles=roles,
+    )
+
+
 async def get_current_user(
     request: Request,
     remote_user: str | None = Header(default=None, alias="X-Remote-User"),
     gss_name: str | None = Header(default=None, alias="X-GSS-Name"),
+    authorization: str | None = Header(default=None, alias="Authorization"),
 ) -> UserContext:
     """Resolve the current user from Apache headers and AD groups."""
+
+    # Manual basic auth path (used by the UI login modal)
+    if authorization and authorization.lower().startswith("basic "):
+        try:
+            payload = authorization.split(" ", 1)[1]
+            decoded = base64.b64decode(payload).decode("utf-8")
+            user_part, password = decoded.split(":", 1)
+        except Exception as exc:  # pragma: no cover - defensive decoding
+            logger.error("Invalid Basic auth header: %s", exc)
+            raise HTTPException(status_code=401, detail="Некорректные учетные данные")
+
+        return authenticate_basic(user_part, password, gss_name=gss_name)
 
     # Allow anonymous access when Apache/GSS headers are missing so the
     # dashboard keeps working in environments without SSO configured yet.
