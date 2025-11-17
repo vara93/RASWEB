@@ -13,6 +13,7 @@ from fastapi import Request
 
 import ras_client
 import monitoring
+import web_publish
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -127,6 +128,56 @@ async def api_restart_service(unit_name: str) -> Dict[str, object]:
     if not result.get("success"):
         return result
     return result
+
+
+@app.get("/api/webpublications")
+async def api_web_publications() -> Dict[str, List[Dict[str, object]]]:
+    logger.info("Listing web publications")
+    pubs = web_publish.list_publications()
+    return {"publications": [pub.__dict__ for pub in pubs]}
+
+
+@app.post("/api/infobases/{name}/publish")
+async def api_publish_infobase(name: str) -> Dict[str, object]:
+    logger.info("Publish request for infobase: %s", name)
+    if web_publish.is_infobase_published(name):
+        raise HTTPException(status_code=400, detail="ИБ уже опубликована")
+
+    uuid: str | None = None
+    try:
+        infos = ras_client.get_infobases()
+        for ib in infos:
+            if ib.get("name") == name:
+                uuid = ib.get("infobase")
+                break
+    except ras_client.RacError as exc:
+        logger.error("Failed to fetch infobases for publish lookup: %s", exc)
+
+    conn_str = f"Srvr={web_publish.ONEC_SERVER};Ref={name}"
+
+    try:
+        publication = web_publish.publish_infobase(name, conn_str=conn_str, uuid=uuid)
+    except RuntimeError as exc:
+        logger.exception("Publish failed for %s", name)
+        raise HTTPException(status_code=500, detail=str(exc))
+
+    return {
+        "success": True,
+        "message": "База опубликована",
+        "publication": publication.__dict__,
+    }
+
+
+@app.delete("/api/webpublications/{name}")
+async def api_delete_publication(name: str) -> Dict[str, object]:
+    logger.info("Delete publication requested for: %s", name)
+    try:
+        web_publish.delete_publication(name)
+    except RuntimeError as exc:
+        logger.exception("Delete publication failed: %s", name)
+        raise HTTPException(status_code=500, detail=str(exc))
+
+    return {"success": True, "message": "Публикация удалена"}
 
 
 @app.get("/api/monitoring/services/{unit_name}/logs")
