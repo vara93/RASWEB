@@ -11,9 +11,9 @@ cd "$APP_DIR"
 $PYTHON -m venv venv
 source venv/bin/activate
 pip install --upgrade pip
-pip install fastapi "uvicorn[standard]" jinja2
+pip install fastapi "uvicorn[standard]" jinja2 psutil
 
-to_copy=(ras_client.py main.py templates)
+to_copy=(ras_client.py monitoring.py main.py templates)
 for item in "${to_copy[@]}"; do
   cp -r "${SCRIPT_DIR}/${item}" "$APP_DIR/"
 done

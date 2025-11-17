@@ -12,6 +12,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi import Request
 
 import ras_client
+import monitoring
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -89,6 +90,49 @@ async def api_licenses() -> Dict[str, List[Dict[str, str]]]:
     except ras_client.RacError as exc:
         logger.exception("Failed to get licenses")
         raise HTTPException(status_code=500, detail=str(exc))
+
+
+@app.get("/api/monitoring/summary")
+async def api_monitoring_summary() -> Dict[str, Dict[str, object]]:
+    logger.info("Fetching monitoring summary")
+    return {
+        "cpu": monitoring.get_cpu_info(),
+        "memory": monitoring.get_memory_info(),
+        "disk": monitoring.get_disk_info(),
+    }
+
+
+@app.get("/api/monitoring/services")
+async def api_monitoring_services() -> Dict[str, List[Dict[str, object]]]:
+    logger.info("Listing services for monitoring")
+    services = monitoring.detect_services()
+    enriched: List[Dict[str, object]] = []
+    for service in services:
+        status = monitoring.get_service_status(service.id)
+        enriched.append({
+            "id": service.id,
+            "display_name": service.display_name,
+            "category": service.category,
+            "port": service.port,
+            **status,
+        })
+    return {"services": enriched}
+
+
+@app.post("/api/monitoring/services/{unit_name}/restart")
+async def api_restart_service(unit_name: str) -> Dict[str, object]:
+    logger.warning("Restart requested for service: %s", unit_name)
+    result = monitoring.restart_service(unit_name)
+    if not result.get("ok"):
+        raise HTTPException(status_code=400, detail=result.get("error", "Restart failed"))
+    return result
+
+
+@app.get("/api/monitoring/services/{unit_name}/logs")
+async def api_service_logs(unit_name: str, lines: int = Query(default=100, ge=10, le=500)) -> Dict[str, List[str]]:
+    logger.info("Fetching logs for service %s (lines=%s)", unit_name, lines)
+    logs = monitoring.get_service_logs(unit_name, lines=lines)
+    return {"logs": logs}
 
 
 @app.get("/health")
