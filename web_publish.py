@@ -20,7 +20,7 @@ ONEC_SERVER = "t03-1c11.fd.local"
 
 SSO_MARK_TEMPLATE = "# 1c sso {wsdir}"
 SSO_SNIPPET_TEMPLATE = """# 1c sso {wsdir}
-<LocationMatch \"^/(?!server-status|server-info|icons/|\\.well-known/(?:acme-challenge/)?)(?:{wsdir})(?:/|$)\">\n    AuthType GSSAPI\n    AuthName \"Kerberos Login\"\n    Require valid-user\n\n    # серверный keytab с HTTP/FQDN\n    GssapiCredStore keytab:/etc/1C/http/http1cv8.keytab\n    GssapiCredStore client_keytab:/etc/1C/http/http1cv8.keytab\n    # Передача билета в 1С;\n    GssapiDelegCcacheDir /var/krb/1c\n    GssapiDelegCcacheUnique On\n\n    GssapiLocalName Off\n\n    # диагностика\n    Header always set X-Remote-User \"expr=%{REMOTE_USER}\"\n    Header always set X-GSS-Name    \"%{GSS_NAME}e\"\n</LocationMatch>\n"""
+<LocationMatch \"^/(?!server-status|server-info|icons/|\\.well-known/(?:acme-challenge/)?)(?:{wsdir})(?:/|$)\">\n    AuthType GSSAPI\n    AuthName \"Kerberos Login\"\n    Require valid-user\n\n    # серверный keytab с HTTP/FQDN\n    GssapiCredStore keytab:/etc/1C/http/http1cv8.keytab\n    GssapiCredStore client_keytab:/etc/1C/http/http1cv8.keytab\n    # Передача билета в 1С;\n    GssapiDelegCcacheDir /var/krb/1c\n    GssapiDelegCcacheUnique On\n\n    GssapiLocalName Off\n\n    # диагностика\n    Header always set X-Remote-User \"expr=%{{REMOTE_USER}}\"\n    Header always set X-GSS-Name    \"%{{GSS_NAME}}e\"\n</LocationMatch>\n"""
 
 
 @dataclass
