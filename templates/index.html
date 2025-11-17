@@ -322,7 +322,34 @@
                         </div>
                         <div class="text-sm text-slate-500" id="groups-meta">—</div>
                     </div>
-                    <div id="group-cards" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+                    <div class="space-y-4">
+                        <div class="border border-slate-200 rounded-2xl p-4 bg-slate-50">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div id="ldap-status-dot" class="h-3 w-3 rounded-full bg-slate-300"></div>
+                                    <div>
+                                        <p class="text-xs uppercase tracking-wide text-slate-500">Проверка Active Directory</p>
+                                        <p id="ldap-status-text" class="text-sm text-slate-700">—</p>
+                                    </div>
+                                </div>
+                                <button id="ldap-refresh" class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 shadow-sm hover:shadow transition text-sm">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 4.5v6h6m9-3a9 9 0 11-9-9" />
+                                    </svg>
+                                    Обновить
+                                </button>
+                            </div>
+                            <div class="mt-3 flex flex-col gap-2">
+                                <label for="ldap-probe-user" class="text-xs font-semibold text-slate-600">Проверить пользователя</label>
+                                <div class="flex flex-col sm:flex-row gap-2">
+                                    <input id="ldap-probe-user" type="text" placeholder="sAMAccountName или user@domain" class="flex-1 rounded-xl border border-slate-200 px-3 py-2 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none text-sm" />
+                                    <button id="ldap-probe-btn" class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-500 text-white shadow hover:shadow-md transition-all text-sm">Проверить</button>
+                                </div>
+                                <p id="ldap-probe-result" class="text-sm text-slate-500">—</p>
+                            </div>
+                        </div>
+                        <div id="group-cards" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+                    </div>
                 </div>
             </section>
 
@@ -501,6 +528,7 @@
     let webPublicationsMap = {};
     let currentInfobases = [];
     let groupConfig = null;
+    let ldapStatusInfo = null;
 
     let currentUser = { roles: [] };
     (function preloadUserFromStorage() {
@@ -707,13 +735,92 @@
         });
     }
 
+    function renderLdapStatus() {
+        const dot = document.getElementById('ldap-status-dot');
+        const text = document.getElementById('ldap-status-text');
+        const probeResult = document.getElementById('ldap-probe-result');
+        const probeInput = document.getElementById('ldap-probe-user');
+        const probeBtn = document.getElementById('ldap-probe-btn');
+        const refreshBtn = document.getElementById('ldap-refresh');
+
+        if (!hasRole('Admin')) {
+            if (dot) dot.className = 'h-3 w-3 rounded-full bg-slate-300';
+            if (text) text.textContent = 'Требуется роль Admin для проверки AD';
+            if (probeResult) probeResult.textContent = '—';
+            [probeInput, probeBtn, refreshBtn].forEach(el => {
+                if (el) el.disabled = true;
+            });
+            return;
+        }
+
+        [probeInput, probeBtn, refreshBtn].forEach(el => {
+            if (el) el.disabled = false;
+        });
+
+        if (!ldapStatusInfo) {
+            if (dot) dot.className = 'h-3 w-3 rounded-full bg-slate-300';
+            if (text) text.textContent = '—';
+            if (probeResult) probeResult.textContent = '—';
+            return;
+        }
+
+        if (ldapStatusInfo.reachable) {
+            if (dot) dot.className = 'h-3 w-3 rounded-full bg-emerald-500';
+            if (text)
+                text.textContent = `LDAP доступен (${ldapStatusInfo.base_dn || 'base DN не задан'})`;
+            if (probeResult) {
+                if (ldapStatusInfo.probe_user) {
+                    const found = ldapStatusInfo.user_found;
+                    const count = ldapStatusInfo.entries;
+                    probeResult.textContent = found
+                        ? `Пользователь найден (записей: ${count})`
+                        : `Пользователь не найден (записей: ${count})`;
+                    probeResult.className = found
+                        ? 'text-sm text-emerald-600'
+                        : 'text-sm text-red-600';
+                } else {
+                    probeResult.textContent = 'Введите доменное имя пользователя и нажмите Проверить';
+                    probeResult.className = 'text-sm text-slate-500';
+                }
+            }
+        } else {
+            if (dot) dot.className = 'h-3 w-3 rounded-full bg-red-500';
+            if (text) text.textContent = ldapStatusInfo.message || 'Ошибка подключения к LDAP';
+            if (probeResult) {
+                probeResult.textContent = ldapStatusInfo.message || 'Нет соединения';
+                probeResult.className = 'text-sm text-red-600';
+            }
+        }
+    }
+
+    async function loadLdapStatus(probeUser = '') {
+        if (!hasRole('Admin')) {
+            ldapStatusInfo = null;
+            renderLdapStatus();
+            return;
+        }
+
+        const text = document.getElementById('ldap-status-text');
+        if (text) text.textContent = 'Проверка связи с LDAP...';
+
+        try {
+            const search = probeUser ? `?user=${encodeURIComponent(probeUser)}` : '';
+            ldapStatusInfo = await fetchJSON(`/auth/ldap/status${search}`);
+        } catch (err) {
+            ldapStatusInfo = { reachable: false, message: err?.message || 'Ошибка LDAP' };
+        }
+
+        renderLdapStatus();
+    }
+
     function renderGroupConfig() {
         const container = document.getElementById('group-cards');
         if (!container) return;
         const isAdmin = hasRole('Admin');
         if (!groupConfig) {
             container.innerHTML = '<div class="text-sm text-slate-500">Нет данных о группах или нет доступа</div>';
-            document.getElementById('groups-meta')?.textContent = '—';
+            const groupsMeta = document.getElementById('groups-meta');
+            if (groupsMeta) groupsMeta.textContent = '—';
             return;
         }
 
@@ -759,7 +866,8 @@
         }).join('');
 
         const totalCustom = Object.values(groupConfig.custom || {}).reduce((acc, arr) => acc + (arr?.length || 0), 0);
-        document.getElementById('groups-meta')?.textContent = `${totalCustom} пользовательских групп`;
+        const groupsMeta = document.getElementById('groups-meta');
+        if (groupsMeta) groupsMeta.textContent = `${totalCustom} пользовательских групп`;
 
         if (isAdmin) {
             container.querySelectorAll('button.remove-group').forEach(btn => {
@@ -1362,6 +1470,7 @@
                 await loadMonitoringSummary();
                 await loadServices();
                 await loadGroupConfig();
+                await loadLdapStatus();
             } catch (err) {
                 if (loginError) {
                     loginError.textContent = err?.message || 'Ошибка авторизации';
@@ -1428,9 +1537,24 @@
         });
     }
 
+    const ldapProbeBtn = document.getElementById('ldap-probe-btn');
+    if (ldapProbeBtn) {
+        ldapProbeBtn.addEventListener('click', () => {
+            const input = document.getElementById('ldap-probe-user');
+            const value = input?.value?.trim() || '';
+            loadLdapStatus(value);
+        });
+    }
+
+    const ldapRefreshBtn = document.getElementById('ldap-refresh');
+    if (ldapRefreshBtn) {
+        ldapRefreshBtn.addEventListener('click', () => loadLdapStatus(document.getElementById('ldap-probe-user')?.value?.trim() || ''));
+    }
+
     async function initializeDashboard() {
         await loadCurrentUser();
         await loadGroupConfig();
+        await loadLdapStatus();
         checkHealth();
         await loadData();
         loadMonitoringSummary();
