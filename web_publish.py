@@ -165,9 +165,21 @@ def publish_infobase(name: str, conn_str: str, uuid: Optional[str] = None) -> We
 
 def delete_publication(name: str) -> None:
     """Delete a publication for the given infobase name (wsdir) and reload Apache."""
+
+    # Try to detect actual paths from existing publications to avoid missing descriptor errors.
     pub_dir = os.path.join(WEB_BASE_DIR, name)
     descriptor_target = os.path.join(pub_dir, "default.vrd")
     conn_str = f"Srvr={ONEC_SERVER};Ref={name}"
+
+    existing = next((p for p in list_publications() if p.wsdir.lower() == name.lower()), None)
+    if existing:
+        pub_dir = existing.dir
+        descriptor_target = existing.descriptor_path
+
+    # Fallback to the template descriptor if the expected one is absent (common when publish used a shared template).
+    if not os.path.exists(descriptor_target) and os.path.exists(DESCRIPTOR_TEMPLATE):
+        logger.info("Descriptor %s not found, falling back to template %s", descriptor_target, DESCRIPTOR_TEMPLATE)
+        descriptor_target = DESCRIPTOR_TEMPLATE
 
     cmd = [
         WEBINST_BIN,
