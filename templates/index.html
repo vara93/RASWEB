@@ -418,10 +418,27 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', () => {
+    async function parseJsonResponse(res) {
+        const text = await res.text();
+        try {
+            return { data: text ? JSON.parse(text) : {} };
+        } catch (err) {
+            return { parseError: err, raw: text };
+        }
+    }
+
     async function fetchJSON(url) {
         const res = await fetch(url);
-        if (!res.ok) throw new Error(`Request failed: ${res.status}`);
-        return res.json();
+        const parsed = await parseJsonResponse(res);
+        if (parsed.parseError) {
+            throw new Error(`Некорректный ответ: ${parsed.raw || 'empty body'}`);
+        }
+        if (!res.ok) {
+            const data = parsed.data || {};
+            const msg = data.detail || data.message || `Request failed: ${res.status}`;
+            throw new Error(msg);
+        }
+        return parsed.data;
     }
 
     function setText(id, value) {
@@ -759,8 +776,12 @@
             buttonEl,
             requestFn: async () => {
                 const resp = await fetch(`/api/infobases/${encodeURIComponent(name)}/publish`, { method: 'POST' });
-                const data = await resp.json();
-                if (!resp.ok || !data.success) {
+                const parsed = await parseJsonResponse(resp);
+                if (parsed.parseError) {
+                    throw new Error(`Некорректный ответ: ${parsed.raw || ''}`);
+                }
+                const data = parsed.data || {};
+                if (!resp.ok || data.success === false) {
                     throw new Error(data.detail || data.message || 'Ошибка публикации');
                 }
                 return data;
@@ -778,7 +799,11 @@
             buttonEl,
             requestFn: async () => {
                 const resp = await fetch(`/api/webpublications/${encodeURIComponent(name)}`, { method: 'DELETE' });
-                const data = await resp.json();
+                const parsed = await parseJsonResponse(resp);
+                if (parsed.parseError) {
+                    throw new Error(`Некорректный ответ: ${parsed.raw || ''}`);
+                }
+                const data = parsed.data || {};
                 if (!resp.ok || !data.success) {
                     throw new Error(data.detail || data.message || 'Ошибка удаления');
                 }
@@ -798,7 +823,11 @@
             requestFn: async () => {
                 const path = enable ? 'enable' : 'disable';
                 const resp = await fetch(`/api/webpublications/${encodeURIComponent(name)}/sso/${path}`, { method: 'POST' });
-                const data = await resp.json();
+                const parsed = await parseJsonResponse(resp);
+                if (parsed.parseError) {
+                    throw new Error(`Некорректный ответ: ${parsed.raw || ''}`);
+                }
+                const data = parsed.data || {};
                 if (!resp.ok || data.success === false) {
                     throw new Error(data.detail || data.message || 'Ошибка SSO операции');
                 }

@@ -145,6 +145,9 @@ async def api_enable_sso(name: str) -> Dict[str, object]:
     except RuntimeError as exc:
         logger.exception("Failed to enable SSO for %s", name)
         raise HTTPException(status_code=500, detail=str(exc))
+    except Exception as exc:  # pragma: no cover - safety net
+        logger.exception("Unexpected error enabling SSO for %s", name)
+        raise HTTPException(status_code=500, detail=str(exc))
 
     return {"success": True, "message": "SSO включено", "name": name}
 
@@ -156,6 +159,9 @@ async def api_disable_sso(name: str) -> Dict[str, object]:
         web_publish.disable_sso(name)
     except RuntimeError as exc:
         logger.exception("Failed to disable SSO for %s", name)
+        raise HTTPException(status_code=500, detail=str(exc))
+    except Exception as exc:  # pragma: no cover - safety net
+        logger.exception("Unexpected error disabling SSO for %s", name)
         raise HTTPException(status_code=500, detail=str(exc))
 
     return {"success": True, "message": "SSO отключено", "name": name}
