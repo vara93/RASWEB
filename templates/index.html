@@ -318,7 +318,7 @@
                     <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-200">
                         <div>
                             <h2 class="text-xl font-semibold text-slate-800">Группы доступа</h2>
-                            <p class="text-sm text-slate-500">Управление группами AD для ролей Admin / Support / Read</p>
+                            <p class="text-sm text-slate-500">Добавляйте пользователей или группы AD к ролям Admin / Support / Read</p>
                         </div>
                         <div class="text-sm text-slate-500" id="groups-meta">—</div>
                     </div>
@@ -529,6 +529,15 @@
     let currentInfobases = [];
     let groupConfig = null;
     let ldapStatusInfo = null;
+
+    function normalizeRoleEntry(entry) {
+        if (!entry) return { groups: [], users: [] };
+        if (Array.isArray(entry)) return { groups: entry, users: [] }; // backward compatibility
+        return {
+            groups: Array.isArray(entry.groups) ? entry.groups : [],
+            users: Array.isArray(entry.users) ? entry.users : [],
+        };
+    }
 
     let currentUser = { roles: [] };
     (function preloadUserFromStorage() {
@@ -831,14 +840,18 @@
         ];
 
         container.innerHTML = roles.map(role => {
-            const builtin = groupConfig.builtin?.[role.key] || [];
-            const custom = groupConfig.custom?.[role.key] || [];
-            const effective = groupConfig.effective?.[role.key] || [];
+            const builtin = normalizeRoleEntry(groupConfig.builtin?.[role.key]);
+            const custom = normalizeRoleEntry(groupConfig.custom?.[role.key]);
+            const effective = normalizeRoleEntry(groupConfig.effective?.[role.key]);
             const toneClass = role.tone === 'emerald' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : role.tone === 'blue' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-slate-50 text-slate-700 border-slate-200';
 
-            const customBadges = custom.length
-                ? custom.map(g => `<span class=\"inline-flex items-center gap-2 px-2 py-1 rounded-full border border-slate-200 bg-slate-50 text-xs text-slate-700 mr-2 mb-2\">${g}<button class=\"remove-group text-slate-400 hover:text-red-500\" data-role=\"${role.key}\" data-group=\"${g}\">×</button></span>`).join('')
+            const customGroupBadges = custom.groups.length
+                ? custom.groups.map(g => `<span class=\"inline-flex items-center gap-2 px-2 py-1 rounded-full border border-slate-200 bg-slate-50 text-xs text-slate-700 mr-2 mb-2\">${g}<button class=\"remove-group text-slate-400 hover:text-red-500\" data-role=\"${role.key}\" data-group=\"${g}\">×</button></span>`).join('')
                 : '<span class="text-xs text-slate-400">Нет пользовательских групп</span>';
+
+            const customUserBadges = custom.users.length
+                ? custom.users.map(u => `<span class=\"inline-flex items-center gap-2 px-2 py-1 rounded-full border border-emerald-200 bg-emerald-50 text-xs text-emerald-700 mr-2 mb-2\">${u}<button class=\"remove-user text-emerald-400 hover:text-red-500\" data-role=\"${role.key}\" data-user=\"${u}\">×</button></span>`).join('')
+                : '<span class="text-xs text-slate-400">Нет назначенных пользователей</span>';
 
             const disabledOverlay = isAdmin ? '' : 'opacity-60 pointer-events-none';
 
@@ -849,48 +862,89 @@
                             <p class="text-xs uppercase tracking-wide text-slate-400">${role.label}</p>
                             <div class="flex items-center gap-2 mt-1 text-sm text-slate-600">
                                 <span class="inline-flex items-center gap-2 px-2 py-1 rounded-full border ${toneClass}">Роль ${role.key}</span>
-                                <span class="text-xs text-slate-500">Встроенные: ${builtin.join(', ') || '—'}</span>
+                                <span class="text-xs text-slate-500">Встроенные группы: ${builtin.groups.join(', ') || '—'}</span>
                             </div>
                         </div>
-                        <div class="text-xs text-slate-500">Итого: ${effective.length}</div>
+                        <div class="text-xs text-slate-500">В роли: ${effective.users.length} пользователей</div>
+                    </div>
+                    <div class="mb-3">
+                        <p class="text-xs font-semibold text-slate-500 mb-2">Пользователи роли</p>
+                        <div class="flex flex-wrap">${customUserBadges}</div>
+                    </div>
+                    <div class="flex items-center gap-2 mb-4 ${disabledOverlay}">
+                        <input data-role="${role.key}" data-type="user-input" type="text" placeholder="sAMAccountName пользователя" class="flex-1 rounded-xl border border-slate-200 px-3 py-2 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none text-sm" />
+                        <button data-role="${role.key}" data-action="add-user" class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-600 text-white shadow hover:shadow-md transition-all text-sm">Добавить</button>
                     </div>
                     <div class="mb-3">
                         <p class="text-xs font-semibold text-slate-500 mb-2">Пользовательские группы</p>
-                        <div class="flex flex-wrap">${customBadges}</div>
+                        <div class="flex flex-wrap">${customGroupBadges}</div>
                     </div>
                     <div class="flex items-center gap-2 ${disabledOverlay}">
-                        <input data-role="${role.key}" data-type="input" type="text" placeholder="sAMAccountName группы" class="flex-1 rounded-xl border border-slate-200 px-3 py-2 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none text-sm" />
-                        <button data-role="${role.key}" data-action="add" class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-500 text-white shadow hover:shadow-md transition-all text-sm">Добавить</button>
+                        <input data-role="${role.key}" data-type="group-input" type="text" placeholder="sAMAccountName группы" class="flex-1 rounded-xl border border-slate-200 px-3 py-2 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none text-sm" />
+                        <button data-role="${role.key}" data-action="add-group" class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-500 text-white shadow hover:shadow-md transition-all text-sm">Добавить</button>
                     </div>
                 </div>`;
         }).join('');
 
-        const totalCustom = Object.values(groupConfig.custom || {}).reduce((acc, arr) => acc + (arr?.length || 0), 0);
+        const totals = Object.values(groupConfig.custom || {}).reduce((acc, entry) => {
+            const normalized = normalizeRoleEntry(entry);
+            acc.groups += normalized.groups.length;
+            acc.users += normalized.users.length;
+            return acc;
+        }, { groups: 0, users: 0 });
         const groupsMeta = document.getElementById('groups-meta');
-        if (groupsMeta) groupsMeta.textContent = `${totalCustom} пользовательских групп`;
+        if (groupsMeta) groupsMeta.textContent = `${totals.users} пользователей, ${totals.groups} групп`;
 
         if (isAdmin) {
             container.querySelectorAll('button.remove-group').forEach(btn => {
-                btn.addEventListener('click', async (e) => {
+                btn.addEventListener('click', async () => {
                     const role = btn.getAttribute('data-role');
                     const group = btn.getAttribute('data-group');
                     if (!role || !group) return;
-                    const updated = (groupConfig.custom?.[role] || []).filter(g => g !== group);
-                    await saveRoleGroups(role, updated);
+                    const current = normalizeRoleEntry(groupConfig.custom?.[role]);
+                    const updatedGroups = current.groups.filter(g => g !== group);
+                    await saveRoleMembers(role, { groups: updatedGroups, users: current.users });
                 });
             });
 
-            container.querySelectorAll('button[data-action="add"]').forEach(btn => {
+            container.querySelectorAll('button.remove-user').forEach(btn => {
                 btn.addEventListener('click', async () => {
                     const role = btn.getAttribute('data-role');
-                    const input = container.querySelector(`input[data-role="${role}"][data-type="input"]`);
+                    const user = btn.getAttribute('data-user');
+                    if (!role || !user) return;
+                    const current = normalizeRoleEntry(groupConfig.custom?.[role]);
+                    const updatedUsers = current.users.filter(u => u !== user);
+                    await saveRoleMembers(role, { groups: current.groups, users: updatedUsers });
+                });
+            });
+
+            container.querySelectorAll('button[data-action="add-group"]').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const role = btn.getAttribute('data-role');
+                    const input = container.querySelector(`input[data-role="${role}"][data-type="group-input"]`);
                     if (!role || !input) return;
                     const val = input.value.trim();
                     if (!val) return;
-                    const existing = new Set(groupConfig.custom?.[role] || []);
+                    const current = normalizeRoleEntry(groupConfig.custom?.[role]);
+                    const existing = new Set(current.groups || []);
                     existing.add(val);
                     input.value = '';
-                    await saveRoleGroups(role, Array.from(existing));
+                    await saveRoleMembers(role, { groups: Array.from(existing), users: current.users });
+                });
+            });
+
+            container.querySelectorAll('button[data-action="add-user"]').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const role = btn.getAttribute('data-role');
+                    const input = container.querySelector(`input[data-role="${role}"][data-type="user-input"]`);
+                    if (!role || !input) return;
+                    const val = input.value.trim();
+                    if (!val) return;
+                    const current = normalizeRoleEntry(groupConfig.custom?.[role]);
+                    const existingUsers = new Set(current.users || []);
+                    existingUsers.add(val);
+                    input.value = '';
+                    await saveRoleMembers(role, { groups: current.groups, users: Array.from(existingUsers) });
                 });
             });
         }
@@ -906,17 +960,17 @@
     const webOpSubtitle = document.getElementById('webop-subtitle');
     const webOpMessage = document.getElementById('webop-message');
     const webOpCloseBtn = document.getElementById('webop-close');
-    async function saveRoleGroups(role, groups) {
+    async function saveRoleMembers(role, payload) {
         try {
             const res = await fetchJSON('/auth/groups', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ role, groups })
+                body: JSON.stringify({ role, ...payload })
             });
             groupConfig = res.config || res;
             renderGroupConfig();
         } catch (err) {
-            console.error('Не удалось обновить группы', err);
+            console.error('Не удалось обновить роли', err);
         }
     }
 

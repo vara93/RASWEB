@@ -1,5 +1,5 @@
 {
-  "Admin": [],
-  "Support": [],
-  "Read": []
+  "Admin": {"groups": [], "users": []},
+  "Support": {"groups": [], "users": []},
+  "Read": {"groups": [], "users": []}
 }

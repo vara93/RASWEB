@@ -44,27 +44,46 @@ SUPPORT_GROUPS = {"1c-ras-support"}
 READ_GROUPS = {"1c-ras-readonly"}
 
 
-def _load_custom_groups() -> dict:
-    """Load mutable group configuration from disk (lower-cased)."""
+def _default_custom() -> dict:
+    return {
+        "Admin": {"groups": [], "users": []},
+        "Support": {"groups": [], "users": []},
+        "Read": {"groups": [], "users": []},
+    }
 
-    default = {"Admin": [], "Support": [], "Read": []}
+
+def _load_custom_groups() -> dict:
+    """Load mutable group/user configuration from disk (lower-cased)."""
+
+    default = _default_custom()
     if not GROUP_CONFIG_PATH.exists():
         return default
     try:
         with GROUP_CONFIG_PATH.open("r", encoding="utf-8") as fh:
             data = json.load(fh)
-            return {
-                "Admin": [g.lower() for g in data.get("Admin", [])],
-                "Support": [g.lower() for g in data.get("Support", [])],
-                "Read": [g.lower() for g in data.get("Read", [])],
-            }
+
+        # Backward compatibility: old schema stored list of groups per role.
+        parsed: dict[str, dict[str, list[str]]] = _default_custom()
+        for role in ("Admin", "Support", "Read"):
+            value = data.get(role, {})
+            if isinstance(value, list):
+                parsed[role]["groups"] = [g.lower() for g in value]
+                parsed[role]["users"] = []
+            else:
+                parsed[role]["groups"] = [
+                    g.lower() for g in value.get("groups", []) if g
+                ]
+                parsed[role]["users"] = [
+                    u.lower() for u in value.get("users", []) if u
+                ]
+        return parsed
     except Exception as exc:  # pragma: no cover - defensive
         logger.error("Failed to load auth group config: %s", exc)
         return default
 
 
 def _save_custom_groups(config: dict) -> None:
-    """Persist custom groups configuration to disk."""
+    """Persist custom groups/users configuration to disk."""
 
     GROUP_CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
     with GROUP_CONFIG_PATH.open("w", encoding="utf-8") as fh:
@@ -72,34 +91,48 @@ def _save_custom_groups(config: dict) -> None:
 
 
 def get_group_config() -> dict:
-    """Return current group configuration (builtin, custom, effective)."""
+    """Return current group/user configuration (builtin, custom, effective)."""
 
     custom = _load_custom_groups()
     effective = {
-        "Admin": sorted({*ADMIN_GROUPS, *custom.get("Admin", [])}),
-        "Support": sorted({*SUPPORT_GROUPS, *custom.get("Support", [])}),
-        "Read": sorted({*READ_GROUPS, *custom.get("Read", [])}),
+        "Admin": {
+            "groups": sorted({*ADMIN_GROUPS, *custom.get("Admin", {}).get("groups", [])}),
+            "users": sorted(set(custom.get("Admin", {}).get("users", []))),
+        },
+        "Support": {
+            "groups": sorted({*SUPPORT_GROUPS, *custom.get("Support", {}).get("groups", [])}),
+            "users": sorted(set(custom.get("Support", {}).get("users", []))),
+        },
+        "Read": {
+            "groups": sorted({*READ_GROUPS, *custom.get("Read", {}).get("groups", [])}),
+            "users": sorted(set(custom.get("Read", {}).get("users", []))),
+        },
     }
     return {
         "builtin": {
-            "Admin": sorted(ADMIN_GROUPS),
-            "Support": sorted(SUPPORT_GROUPS),
-            "Read": sorted(READ_GROUPS),
+            "Admin": {"groups": sorted(ADMIN_GROUPS), "users": []},
+            "Support": {"groups": sorted(SUPPORT_GROUPS), "users": []},
+            "Read": {"groups": sorted(READ_GROUPS), "users": []},
         },
         "custom": custom,
         "effective": effective,
     }
 
 
-def update_group_config(role: str, groups: list[str]) -> dict:
-    """Update custom groups for a given role and persist."""
+def update_group_config(role: str, groups: list[str] | None, users: list[str] | None) -> dict:
+    """Update custom groups/users for a given role and persist."""
 
     role_key = role.capitalize()
     if role_key not in {"Admin", "Support", "Read"}:
         raise HTTPException(status_code=400, detail="Неизвестная роль")
 
     custom = _load_custom_groups()
-    custom[role_key] = [g.lower() for g in groups if g]
+    role_cfg = custom.get(role_key, _default_custom()[role_key])
+    if groups is not None:
+        role_cfg["groups"] = [g.lower() for g in groups if g]
+    if users is not None:
+        role_cfg["users"] = [u.lower() for u in users if u]
+    custom[role_key] = role_cfg
     _save_custom_groups(custom)
     return get_group_config()
 
@@ -270,25 +303,37 @@ def ldap_status(probe_user: str | None = None) -> dict:
 def _effective_role_sets() -> dict:
     cfg = _load_custom_groups()
     return {
-        "Admin": {"domain admins", "1c-ras-admins", *cfg.get("Admin", [])},
-        "Support": {"1c-ras-support", *cfg.get("Support", [])},
-        "Read": {"1c-ras-readonly", *cfg.get("Read", [])},
+        "Admin": {
+            "groups": {"domain admins", "1c-ras-admins", *cfg.get("Admin", {}).get("groups", [])},
+            "users": set(cfg.get("Admin", {}).get("users", [])),
+        },
+        "Support": {
+            "groups": {"1c-ras-support", *cfg.get("Support", {}).get("groups", [])},
+            "users": set(cfg.get("Support", {}).get("users", [])),
+        },
+        "Read": {
+            "groups": {"1c-ras-readonly", *cfg.get("Read", {}).get("groups", [])},
+            "users": set(cfg.get("Read", {}).get("users", [])),
+        },
     }
 
 
-def _roles_from_groups(groups: Iterable[str]) -> List[str]:
+def _roles_from_members(username: str, groups: Iterable[str]) -> List[str]:
+    username_l = username.lower()
     group_set: Set[str] = {g.lower() for g in groups}
     roles: Set[str] = set()
     effective = _effective_role_sets()
 
     for role, mapped in effective.items():
-        if mapped & group_set:
+        if username_l in mapped["users"]:
+            roles.add(role)
+        if mapped["groups"] & group_set:
             roles.add(role)
 
     if "domain admins" in group_set:
         roles.add("Admin")
 
-    return list(roles)
+    return sorted(roles)
 
 
 def authenticate_basic(username: str, password: str, gss_name: str | None = None) -> UserContext:
@@ -353,7 +398,7 @@ def authenticate_basic(username: str, password: str, gss_name: str | None = None
         upn,
     )
     groups = _fetch_groups(norm_user, upn)
-    roles = _roles_from_groups(groups)
+    roles = _roles_from_members(norm_user, groups)
     if not roles:
         logger.warning("User %s has no allowed roles; groups=%s", norm_user, groups)
         raise HTTPException(status_code=403, detail="Нет разрешенных ролей")
@@ -412,7 +457,7 @@ async def get_current_user(
     upn = f"{username}@{domain}" if domain else f"{username}@{LDAP_DEFAULT_DOMAIN}"
 
     groups = _fetch_groups(username, upn)
-    roles = _roles_from_groups(groups)
+    roles = _roles_from_members(username, groups)
 
     if not roles:
         logger.warning(

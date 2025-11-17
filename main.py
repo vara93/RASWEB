@@ -119,7 +119,8 @@ async def auth_login(
 
 class GroupUpdate(BaseModel):
     role: str
-    groups: List[str]
+    groups: List[str] | None = None
+    users: List[str] | None = None
 
 
 @app.get("/auth/groups")
@@ -136,7 +137,7 @@ async def auth_groups_update(
     payload: GroupUpdate,
     user: UserContext = Depends(require_roles("Admin")),
 ) -> Dict[str, object]:
-    cfg = update_group_config(payload.role, payload.groups)
+    cfg = update_group_config(payload.role, payload.groups, payload.users)
     return {"success": True, "config": cfg}
 
 
