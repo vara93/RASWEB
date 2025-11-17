@@ -161,14 +161,26 @@ def _is_allowed_service(unit_name: str) -> bool:
 def restart_service(unit_name: str) -> Dict[str, object]:
     if not _is_allowed_service(unit_name):
         logger.warning("Attempt to restart non-whitelisted service: %s", unit_name)
-        return {"ok": False, "error": "Service not allowed"}
+        return {
+            "success": False,
+            "message": "Сервис не разрешен к перезапуску",
+            "unit_name": unit_name,
+        }
 
     result = _run_command(["systemctl", "restart", unit_name])
     if result.returncode != 0:
         error_msg = result.stderr.strip() or "Failed to restart service"
         logger.error("Restart failed for %s: %s", unit_name, error_msg)
-        return {"ok": False, "error": error_msg}
-    return {"ok": True}
+        return {
+            "success": False,
+            "message": f"Ошибка systemctl: {error_msg}",
+            "unit_name": unit_name,
+        }
+    return {
+        "success": True,
+        "message": "Сервис успешно перезапущен",
+        "unit_name": unit_name,
+    }
 
 
 def get_service_logs(unit_name: str, lines: int = 100) -> List[str]:

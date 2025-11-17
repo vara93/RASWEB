@@ -123,8 +123,9 @@ async def api_monitoring_services() -> Dict[str, List[Dict[str, object]]]:
 async def api_restart_service(unit_name: str) -> Dict[str, object]:
     logger.warning("Restart requested for service: %s", unit_name)
     result = monitoring.restart_service(unit_name)
-    if not result.get("ok"):
-        raise HTTPException(status_code=400, detail=result.get("error", "Restart failed"))
+    # Always return the standard contract to simplify UI handling.
+    if not result.get("success"):
+        return result
     return result
 
 
