@@ -1,0 +1,1604 @@
+<!DOCTYPE html>
+<html lang="ru" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1C RAS Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="h-full bg-slate-100 text-slate-900">
+<div class="flex h-screen">
+    <!-- Sidebar -->
+    <aside class="w-72 bg-slate-900 text-slate-100 flex flex-col shadow-2xl">
+        <div class="px-6 py-5 border-b border-slate-800 flex items-center gap-3">
+            <div class="h-10 w-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 4.5l.041.001c2.02.05 3.773.444 5.046 1.19 1.35.793 2.163 1.982 2.163 3.309 0 1.301-.782 2.495-2.07 3.287-1.234.757-2.913 1.16-4.83 1.16h-.6c-1.917 0-3.596-.403-4.83-1.16-1.288-.792-2.07-1.986-2.07-3.287 0-1.327.813-2.516 2.163-3.309 1.273-.746 3.026-1.14 5.046-1.19z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75v3.75c0 2.485 3.134 4.5 7 4.5s7-2.015 7-4.5v-3.75" />
+                </svg>
+            </div>
+            <div>
+                <p class="text-xs uppercase tracking-widest text-slate-400">Enterprise</p>
+                <p class="text-xl font-semibold text-white">1C RAS</p>
+            </div>
+        </div>
+        <nav class="flex-1 px-3 py-4 space-y-1">
+            <a href="#dashboard" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all border border-transparent hover:bg-slate-800/50 hover:border-emerald-500/50">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l7.5-9 7.5 9M4.5 10.5v9h15v-9" />
+                </svg>
+                <span class="font-medium">Dashboard</span>
+            </a>
+            <a href="#infobases" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all border border-transparent hover:bg-slate-800/50 hover:border-emerald-500/50">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 5.25h16.5m-16.5 6h16.5m-16.5 6h16.5" />
+                </svg>
+                <span class="font-medium">Информационные базы</span>
+            </a>
+            <a href="#webpublications" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all border border-transparent hover:bg-slate-800/50 hover:border-emerald-500/50">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 7h14M5 12h14M5 17h14" />
+                </svg>
+                <span class="font-medium">WEB публикации</span>
+            </a>
+            <a href="#monitoring" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all border border-transparent hover:bg-slate-800/50 hover:border-emerald-500/50">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3v2.25M14.25 3v2.25M4.5 9.75h15m-13.5 3h12M6.75 21v-6.75m10.5 6.75v-6.75M6 3h12a1.5 1.5 0 011.5 1.5v15A1.5 1.5 0 0118 21H6a1.5 1.5 0 01-1.5-1.5v-15A1.5 1.5 0 016 3z" />
+                </svg>
+                <span class="font-medium">Мониторинг и диагностика</span>
+            </a>
+            <a href="#groups" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all border border-transparent hover:bg-slate-800/50 hover:border-emerald-500/50">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 14a7 7 0 00-6.938 6h13.876A7 7 0 0012 14z" />
+                </svg>
+                <span class="font-medium">Группы доступа</span>
+            </a>
+            <a href="#sessions" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all border border-transparent hover:bg-slate-800/50 hover:border-emerald-500/50">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.25a7.5 7.5 0 0115 0" />
+                </svg>
+                <span class="font-medium">Сессии</span>
+            </a>
+            <a href="#processes" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all border border-transparent hover:bg-slate-800/50 hover:border-emerald-500/50">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 6.75h15m-15 10.5h15M9.75 4.5v15m4.5-15v15" />
+                </svg>
+                <span class="font-medium">Процессы</span>
+            </a>
+            <a href="#connections" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all border border-transparent hover:bg-slate-800/50 hover:border-emerald-500/50">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 7.5A3.75 3.75 0 0110.5 3.75h3a3.75 3.75 0 010 7.5h-3a3.75 3.75 0 010-7.5h3m-3 7.5a3.75 3.75 0 100 7.5h3a3.75 3.75 0 000-7.5h-3z" />
+                </svg>
+                <span class="font-medium">Соединения</span>
+            </a>
+            <a href="#locks" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all border border-transparent hover:bg-slate-800/50 hover:border-emerald-500/50">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6a4.5 4.5 0 00-9 0v4.5M6.75 10.5h10.5A1.75 1.75 0 0119 12.25v6A1.75 1.75 0 0117.25 20H6.75A1.75 1.75 0 015 18.25v-6A1.75 1.75 0 016.75 10.5z" />
+                </svg>
+                <span class="font-medium">Блокировки</span>
+            </a>
+            <a href="#licenses" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all border border-transparent hover:bg-slate-800/50 hover:border-emerald-500/50">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 6.75V6A1.5 1.5 0 016 4.5h4.75A2.75 2.75 0 0113.5 7.25v9.5a2.75 2.75 0 01-2.75 2.75H6A1.5 1.5 0 014.5 18v-.75M9 9h3.75M9 12h3.75" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17.25 9.75V9a1.5 1.5 0 00-1.5-1.5h-2.25M14.25 15H18a.75.75 0 01.75.75v1.5a.75.75 0 01-.75.75h-3.75" />
+                </svg>
+                <span class="font-medium">Лицензии</span>
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Area -->
+    <div class="flex flex-col flex-1 overflow-y-auto">
+        <!-- Topbar -->
+        <header class="bg-white shadow-md px-8 py-4 flex items-center justify-between sticky top-0 z-20">
+            <div class="flex items-center gap-4">
+                <div>
+                    <p class="text-sm uppercase tracking-[0.2em] text-slate-400 font-semibold">Control Plane</p>
+                    <h1 class="text-2xl md:text-3xl font-semibold text-slate-900">1C RAS Dashboard</h1>
+                </div>
+                <div class="flex items-center gap-2 text-sm text-slate-500">
+                    <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+                    <span id="status-label">Online</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <div id="user-pill" class="hidden items-center gap-2 bg-slate-100 text-slate-700 px-3 py-2 rounded-xl border border-slate-200 shadow-inner">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.25a7.5 7.5 0 0115 0" />
+                    </svg>
+                    <span id="user-display" class="text-sm font-medium"></span>
+                </div>
+                <button id="login-btn" class="inline-flex items-center gap-2 bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-xl shadow hover:shadow-md transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6A2.25 2.25 0 005.25 5.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9l3 3m0 0l-3 3m3-3H9" />
+                    </svg>
+                    Войти
+                </button>
+                <button id="refresh-all" class="inline-flex items-center gap-2 bg-emerald-500 text-white px-4 py-2 rounded-xl shadow-lg hover:shadow-xl transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 4.5v6h6m9-3a9 9 0 11-9-9" />
+                    </svg>
+                    Refresh
+                </button>
+                <button class="inline-flex items-center gap-2 bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-xl shadow hover:shadow-md transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25M6.75 12H3m18 0h-3.75M12 18.75V21M7.5 7.5l-.75-.75M17.25 17.25l-.75-.75M16.5 7.5l.75-.75M6.75 17.25l.75-.75M12 8.25a3.75 3.75 0 100 7.5 3.75 3.75 0 000-7.5z" />
+                    </svg>
+                    RU
+                </button>
+            </div>
+        </header>
+
+        <main class="p-6 md:p-8 space-y-6">
+            <!-- KPI Cards -->
+            <section id="dashboard">
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+                    <div class="bg-white rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all">
+                        <div class="flex items-center justify-between">
+                            <p class="text-sm uppercase text-slate-500 tracking-wide">Информационные базы</p>
+                            <span class="px-2 py-1 text-xs rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100">Live</span>
+                        </div>
+                        <p class="mt-4 text-4xl font-bold text-slate-900" id="summary-infobases">-</p>
+                        <p class="text-sm text-slate-500 mt-2">Всего баз на кластере</p>
+                    </div>
+                    <div class="bg-white rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all">
+                        <div class="flex items-center justify-between">
+                            <p class="text-sm uppercase text-slate-500 tracking-wide">Активные сессии</p>
+                            <span class="px-2 py-1 text-xs rounded-lg bg-blue-50 text-blue-600 border border-blue-100">Realtime</span>
+                        </div>
+                        <p class="mt-4 text-4xl font-bold text-slate-900" id="summary-sessions">-</p>
+                        <p class="text-sm text-slate-500 mt-2">Подключений пользователей</p>
+                    </div>
+                    <div class="bg-white rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all">
+                        <div class="flex items-center justify-between">
+                            <p class="text-sm uppercase text-slate-500 tracking-wide">Процессы</p>
+                            <span class="px-2 py-1 text-xs rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100">Health</span>
+                        </div>
+                        <p class="mt-4 text-4xl font-bold text-slate-900" id="summary-processes">-</p>
+                        <p class="text-sm text-slate-500 mt-2">Рабочие процессы кластера</p>
+                    </div>
+                    <div class="bg-white rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all">
+                        <div class="flex items-center justify-between">
+                            <p class="text-sm uppercase text-slate-500 tracking-wide">Соединения</p>
+                            <span class="px-2 py-1 text-xs rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100">Live</span>
+                        </div>
+                        <p class="mt-4 text-4xl font-bold text-slate-900" id="summary-connections">-</p>
+                        <p class="text-sm text-slate-500 mt-2">Активных соединений с процессами</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="monitoring" class="space-y-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-2xl font-semibold text-slate-900">Мониторинг и диагностика</h2>
+                        <p class="text-sm text-slate-500">Ресурсные метрики сервера и состояние сервисов</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button id="refresh-monitoring" class="inline-flex items-center gap-2 bg-emerald-500 text-white px-4 py-2 rounded-xl shadow-lg hover:shadow-xl transition-all">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 4.5v6h6m9-3a9 9 0 11-9-9" />
+                            </svg>
+                            Обновить
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="bg-white rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all">
+                        <div class="flex items-center justify-between mb-2">
+                            <p class="text-sm uppercase text-slate-500 tracking-wide">CPU</p>
+                            <span class="text-xs px-2 py-1 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100">Live</span>
+                        </div>
+                        <p class="text-4xl font-bold text-slate-900" id="cpu-usage">- %</p>
+                        <p class="text-sm text-slate-500">Нагрузка на процессор</p>
+                        <div class="mt-4 space-y-1" id="cpu-per-core"></div>
+                    </div>
+                    <div class="bg-white rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all">
+                        <div class="flex items-center justify-between mb-2">
+                            <p class="text-sm uppercase text-slate-500 tracking-wide">Memory</p>
+                            <span class="text-xs px-2 py-1 rounded-lg bg-blue-50 text-blue-600 border border-blue-100">System</span>
+                        </div>
+                        <p class="text-4xl font-bold text-slate-900" id="memory-usage">-</p>
+                        <p class="text-sm text-slate-500" id="memory-meta">—</p>
+                        <div class="mt-4 h-2 bg-slate-100 rounded-full">
+                            <div id="memory-bar" class="h-2 rounded-full bg-emerald-500 transition-all" style="width:0%"></div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all">
+                        <div class="flex items-center justify-between mb-2">
+                            <p class="text-sm uppercase text-slate-500 tracking-wide">Disk</p>
+                            <span class="text-xs px-2 py-1 rounded-lg bg-slate-100 text-slate-700 border border-slate-200">Root</span>
+                        </div>
+                        <p class="text-4xl font-bold text-slate-900" id="disk-usage">-</p>
+                        <p class="text-sm text-slate-500" id="disk-meta">—</p>
+                        <div class="mt-4 h-2 bg-slate-100 rounded-full">
+                            <div id="disk-bar" class="h-2 rounded-full bg-emerald-500 transition-all" style="width:0%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl p-6 shadow hover:shadow-lg transition-all">
+                    <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-200">
+                        <h3 class="text-xl font-semibold text-slate-800">Сервисы</h3>
+                        <div class="text-sm text-slate-500" id="services-meta">—</div>
+                    </div>
+                    <div class="overflow-hidden border border-slate-200 rounded-xl">
+                        <div class="overflow-auto max-h-[480px]">
+                            <table class="min-w-full divide-y divide-slate-200">
+                                <thead class="bg-slate-50 sticky top-0">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Имя</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Категория</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Порт</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Статус</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Автозапуск</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Действия</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="services-body" class="divide-y divide-slate-100 bg-white"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Panels -->
+            <section id="infobases" class="space-y-4">
+                <div class="bg-white rounded-xl p-6 shadow hover:shadow-lg transition-all">
+                    <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-200">
+                        <h2 class="text-xl font-semibold text-slate-800">Информационные базы</h2>
+                        <div class="text-sm text-slate-500" id="infobases-meta">—</div>
+                    </div>
+                    <div class="overflow-hidden border border-slate-200 rounded-xl">
+                        <div class="overflow-auto max-h-96">
+                            <table class="min-w-full divide-y divide-slate-200">
+                                <thead class="bg-slate-50 sticky top-0">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Имя</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">UUID</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Размер</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Описание</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">WEB</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="infobases-body" class="divide-y divide-slate-100 bg-white"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- WEB Publications placed directly after Infobases -->
+            <section id="webpublications" class="space-y-4">
+                <div class="bg-white rounded-xl p-6 shadow hover:shadow-lg transition-all">
+                    <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-200">
+                        <h2 class="text-xl font-semibold text-slate-800">WEB публикации</h2>
+                        <div class="text-sm text-slate-500" id="webpub-meta">—</div>
+                    </div>
+                    <div class="overflow-hidden border border-slate-200 rounded-xl">
+                        <div class="overflow-auto max-h-96">
+                            <table class="min-w-full divide-y divide-slate-200">
+                                <thead class="bg-slate-50 sticky top-0">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Имя ИБ</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">URL</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Директория</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">SSO</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">UUID</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Публикация</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">SSO действие</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="webpub-body" class="divide-y divide-slate-100 bg-white"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="groups" class="space-y-4">
+                <div class="bg-white rounded-xl p-6 shadow hover:shadow-lg transition-all">
+                    <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-200">
+                        <div>
+                            <h2 class="text-xl font-semibold text-slate-800">Группы доступа</h2>
+                            <p class="text-sm text-slate-500">Управление группами AD для ролей Admin / Support / Read</p>
+                        </div>
+                        <div class="text-sm text-slate-500" id="groups-meta">—</div>
+                    </div>
+                    <div id="group-cards" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+                </div>
+            </section>
+
+            <section id="sessions" class="space-y-4">
+                <div class="bg-white rounded-xl p-6 shadow hover:shadow-lg transition-all">
+                    <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-200">
+                        <h2 class="text-xl font-semibold text-slate-800">Сессии</h2>
+                        <div class="text-sm text-slate-500" id="sessions-meta">—</div>
+                    </div>
+                    <div class="overflow-hidden border border-slate-200 rounded-xl">
+                        <div class="overflow-auto max-h-96">
+                            <table class="min-w-full divide-y divide-slate-200">
+                                <thead class="bg-slate-50 sticky top-0">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Session UUID</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Пользователь</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">ИБ</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Host</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">App</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="sessions-body" class="divide-y divide-slate-100 bg-white"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="processes" class="space-y-4">
+                <div class="bg-white rounded-xl p-6 shadow hover:shadow-lg transition-all">
+                    <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-200">
+                        <h2 class="text-xl font-semibold text-slate-800">Процессы</h2>
+                        <div class="text-sm text-slate-500" id="processes-meta">—</div>
+                    </div>
+                    <div class="overflow-hidden border border-slate-200 rounded-xl">
+                        <div class="overflow-auto max-h-96">
+                            <table class="min-w-full divide-y divide-slate-200">
+                                <thead class="bg-slate-50 sticky top-0">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">UUID</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Host</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Port</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">PID</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Perf</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="processes-body" class="divide-y divide-slate-100 bg-white"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="connections" class="space-y-4">
+                <div class="bg-white rounded-xl p-6 shadow hover:shadow-lg transition-all">
+                    <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-200">
+                        <h2 class="text-xl font-semibold text-slate-800">Соединения</h2>
+                        <div class="text-sm text-slate-500" id="connections-meta">—</div>
+                    </div>
+                    <div class="overflow-hidden border border-slate-200 rounded-xl">
+                        <div class="overflow-auto max-h-96">
+                            <table class="min-w-full divide-y divide-slate-200">
+                                <thead class="bg-slate-50 sticky top-0">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">UUID</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Host</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Process</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">ИБ</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Приложение</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="connections-body" class="divide-y divide-slate-100 bg-white"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="locks" class="space-y-4">
+                <div class="bg-white rounded-xl p-6 shadow hover:shadow-lg transition-all">
+                    <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-200">
+                        <h2 class="text-xl font-semibold text-slate-800">Блокировки</h2>
+                        <div class="text-sm text-slate-500" id="locks-meta">—</div>
+                    </div>
+                    <div class="overflow-hidden border border-slate-200 rounded-xl">
+                        <div class="overflow-auto max-h-96">
+                            <table class="min-w-full divide-y divide-slate-200">
+                                <thead class="bg-slate-50 sticky top-0">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Session</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Connection</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Описание</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="locks-body" class="divide-y divide-slate-100 bg-white"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="licenses" class="space-y-4 pb-8">
+                <div class="bg-white rounded-xl p-6 shadow hover:shadow-lg transition-all">
+                    <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-200">
+                        <h2 class="text-xl font-semibold text-slate-800">Лицензии по сессиям</h2>
+                        <div class="text-sm text-slate-500" id="licenses-meta">—</div>
+                    </div>
+                    <div class="overflow-hidden border border-slate-200 rounded-xl">
+                        <div class="overflow-auto max-h-96">
+                            <table class="min-w-full divide-y divide-slate-200">
+                                <thead class="bg-slate-50 sticky top-0">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Пользователь</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Host</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Серия</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Тип</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="licenses-body" class="divide-y divide-slate-100 bg-white"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+    let authToken = localStorage.getItem('rasAuthToken');
+
+    async function parseJsonResponse(res) {
+        const text = await res.text();
+        try {
+            return { data: text ? JSON.parse(text) : {} };
+        } catch (err) {
+            return { parseError: err, raw: text };
+        }
+    }
+
+    function buildAuthHeaders() {
+        const headers = {};
+        if (authToken) {
+            headers['Authorization'] = `Basic ${authToken}`;
+        }
+        return headers;
+    }
+
+    async function authFetch(url, options = {}) {
+        const merged = { ...options };
+        merged.headers = { ...(options.headers || {}), ...buildAuthHeaders() };
+        return fetch(url, merged);
+    }
+
+    async function fetchJSON(url, options = {}) {
+        const res = await authFetch(url, options);
+        const parsed = await parseJsonResponse(res);
+        if (parsed.parseError) {
+            throw new Error(`Некорректный ответ: ${parsed.raw || 'empty body'}`);
+        }
+        if (!res.ok) {
+            const data = parsed.data || {};
+            const msg = data.detail || data.message || `Request failed: ${res.status}`;
+            throw new Error(msg);
+        }
+        return parsed.data;
+    }
+
+    function setText(id, value) {
+        const el = document.getElementById(id);
+        if (el) el.textContent = value;
+    }
+
+    let webPublications = [];
+    let webPublicationsMap = {};
+    let currentInfobases = [];
+    let groupConfig = null;
+
+    let currentUser = { roles: [] };
+    (function preloadUserFromStorage() {
+        try {
+            const stored = localStorage.getItem('rasCurrentUser');
+            if (stored) {
+                currentUser = JSON.parse(stored);
+                updateUserBadge();
+            }
+        } catch (err) {
+            console.warn('Не удалось загрузить пользователя из localStorage', err);
+        }
+    })();
+
+    function updateUserBadge() {
+        const pill = document.getElementById('user-pill');
+        const label = document.getElementById('user-display');
+        if (pill && label) {
+            if (currentUser?.user) {
+                label.textContent = `${currentUser.user}${currentUser.domain ? '@' + currentUser.domain : ''}`;
+                pill.classList.remove('hidden');
+            } else {
+                pill.classList.add('hidden');
+            }
+        }
+    }
+
+    function setAuthToken(token) {
+        authToken = token;
+        if (token) {
+            localStorage.setItem('rasAuthToken', token);
+        } else {
+            localStorage.removeItem('rasAuthToken');
+            localStorage.removeItem('rasCurrentUser');
+        }
+    }
+
+    function hasRole(role) {
+        return (currentUser.roles || []).includes(role);
+    }
+
+    function canSupport() {
+        return hasRole('Admin') || hasRole('Support');
+    }
+
+    function canRead() {
+        return hasRole('Admin') || hasRole('Support') || hasRole('Read');
+    }
+
+    async function loadCurrentUser() {
+        let usedStored = false;
+        let storedUser = null;
+        try {
+            const stored = localStorage.getItem('rasCurrentUser');
+            if (stored) {
+                storedUser = JSON.parse(stored);
+                currentUser = storedUser;
+                usedStored = true;
+                updateUserBadge();
+            }
+        } catch (err) {
+            console.warn('Не удалось прочитать сохраненного пользователя', err);
+        }
+
+        try {
+            const fetched = await fetchJSON('/auth/me');
+            const looksAnonymous = fetched?.user === 'anonymous' ||
+                ((fetched?.roles || []).length === 1 && (fetched.roles || [])[0] === 'Read');
+            if (authToken && usedStored && storedUser && looksAnonymous) {
+                currentUser = storedUser;
+            } else {
+                currentUser = fetched;
+                localStorage.setItem('rasCurrentUser', JSON.stringify(fetched));
+            }
+        } catch (err) {
+            console.error('Не удалось получить данные пользователя', err);
+            if (!usedStored) {
+                currentUser = { user: 'anonymous', roles: ['Read'] };
+                localStorage.removeItem('rasCurrentUser');
+            }
+        }
+        updateUserBadge();
+    }
+
+    function renderTable(bodyId, rows, columns) {
+        const body = document.getElementById(bodyId);
+        if (!body) return;
+        body.innerHTML = rows.map(row => {
+            const cells = columns.map(col => `<td class=\"px-4 py-3 text-sm text-slate-700\">${row[col] ?? ''}</td>`).join('');
+            return `<tr class=\"hover:bg-slate-50 transition-colors\">${cells}</tr>`;
+        }).join('');
+    }
+
+    function formatPercent(value) {
+        if (value === undefined || value === null || Number.isNaN(Number(value))) return '-';
+        return `${Number(value).toFixed(1)}%`;
+    }
+
+    function renderPerCpu(list) {
+        const container = document.getElementById('cpu-per-core');
+        if (!container) return;
+        container.innerHTML = (list || []).map((val, idx) => {
+            const pct = Math.round(val);
+            return `<div class=\"flex items-center gap-3\"><span class=\"text-xs text-slate-500 w-10\">CPU${idx}</span><div class=\"flex-1 h-2 bg-slate-100 rounded-full\"><div class=\"h-2 rounded-full bg-emerald-500 transition-all\" style=\"width:${pct}%\"></div></div><span class=\"text-xs text-slate-600 w-10 text-right\">${pct}%</span></div>`;
+        }).join('');
+    }
+
+    function buildWebMap(pubs) {
+        webPublicationsMap = {};
+        (pubs || []).forEach(pub => {
+            const key = pub.wsdir || pub.infobase_name;
+            if (key) {
+                webPublicationsMap[key] = pub;
+            }
+        });
+    }
+
+    function renderInfobasesTable(rows) {
+        const body = document.getElementById('infobases-body');
+        if (!body) return;
+        body.innerHTML = (rows || []).map(row => {
+            const name = row.name || '';
+            const uuid = row.infobase || '';
+            const descr = row.descr || '';
+            const dbSize = row.db_size || '—';
+            const pub = webPublicationsMap[name];
+            const canPublish = hasRole('Admin');
+            const ssoDot = pub?.sso_enabled
+                ? '<span class=\\"h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-[0_0_0_3px] shadow-emerald-100\\" title=\\"SSO включено\\"></span>'
+                : '';
+            const webCell = pub
+                ? `<div class=\"flex items-center gap-2 flex-wrap\"><span class=\"px-3 py-1 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700 text-xs\">Опубликована</span>${ssoDot}</div>`
+                : canPublish
+                    ? `<button class=\"publish-btn inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-all text-sm\" data-name=\"${name}\">Публикация в Web</button>`
+                    : '<span class="inline-block h-2.5 w-2.5 rounded-full bg-slate-300" title="Нет доступа"></span>';
+            return `<tr class=\"hover:bg-slate-50 transition-colors\">`+
+                `<td class=\"px-4 py-3 text-sm text-slate-800 font-medium\">${name}</td>`+
+                `<td class=\"px-4 py-3 text-sm text-slate-700\">${uuid}</td>`+
+                `<td class=\"px-4 py-3 text-sm text-slate-700\">${dbSize}</td>`+
+                `<td class=\"px-4 py-3 text-sm text-slate-700\">${descr}</td>`+
+                `<td class=\"px-4 py-3 text-sm text-slate-700\">${webCell}</td>`+
+                `</tr>`;
+        }).join('');
+
+        document.querySelectorAll('.publish-btn').forEach(btn => {
+            btn.addEventListener('click', async (event) => {
+                event.stopPropagation();
+                const name = btn.getAttribute('data-name');
+                if (name) {
+                    await publishInfobase(name, btn);
+                }
+            });
+        });
+    }
+
+    function renderWebPublicationsTable(pubs) {
+        const body = document.getElementById('webpub-body');
+        if (!body) return;
+        body.innerHTML = (pubs || []).map(pub => {
+            const ssoIndicator = `<span class=\"inline-flex h-2.5 w-2.5 rounded-full ${pub.sso_enabled ? 'bg-emerald-500 shadow-[0_0_0_3px] shadow-emerald-100' : 'bg-slate-300 shadow-[0_0_0_3px] shadow-slate-100'}\" title=\"SSO\"></span>`;
+            const ssoActionLabel = pub.sso_enabled ? 'Отключить' : 'Включить';
+            const ssoActionClass = pub.sso_enabled
+                ? 'bg-red-50 text-red-600 border border-red-200 hover:bg-red-100'
+                : 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100';
+            const ssoActionAttr = `data-action="${pub.sso_enabled ? 'disable' : 'enable'}"`;
+            const canDelete = hasRole('Admin');
+            const canToggle = canSupport();
+            const deleteBtn = canDelete
+                ? `<button class=\"delete-web-btn inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition-all text-sm\" data-name=\"${pub.wsdir}\">Удалить</button>`
+                : '<span class="inline-block h-2.5 w-2.5 rounded-full bg-slate-300" title="Нет доступа"></span>';
+            const ssoBtn = canToggle
+                ? `<button class=\"sso-web-btn inline-flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all text-sm ${ssoActionClass}\" data-name=\"${pub.wsdir}\" ${ssoActionAttr}>${ssoActionLabel}</button>`
+                : '<span class="inline-block h-2.5 w-2.5 rounded-full bg-slate-300" title="Нет доступа"></span>';
+
+            return `<tr class=\"hover:bg-slate-50 transition-colors\">`+
+                `<td class=\"px-4 py-3 text-sm text-slate-800 font-medium\">${pub.infobase_name || pub.wsdir}</td>`+
+                `<td class=\"px-4 py-3 text-sm text-slate-700\">${pub.url}</td>`+
+                `<td class=\"px-4 py-3 text-sm text-slate-700\">${pub.dir}</td>`+
+                `<td class=\"px-4 py-3 text-sm text-slate-700\">${ssoIndicator}</td>`+
+                `<td class=\"px-4 py-3 text-sm text-slate-700\">${pub.infobase_uuid ?? '—'}</td>`+
+                `<td class=\"px-4 py-3 text-sm\">${deleteBtn}</td>`+
+                `<td class=\"px-4 py-3 text-sm\">${ssoBtn}</td>`+
+                `</tr>`;
+        }).join('');
+
+        document.querySelectorAll('.delete-web-btn').forEach(btn => {
+            btn.addEventListener('click', async (event) => {
+                event.stopPropagation();
+                const name = btn.getAttribute('data-name');
+                if (name) {
+                    await deleteWebPublication(name, btn);
+                }
+            });
+        });
+
+        document.querySelectorAll('.sso-web-btn').forEach(btn => {
+            btn.addEventListener('click', async (event) => {
+                event.stopPropagation();
+                const name = btn.getAttribute('data-name');
+                const action = btn.getAttribute('data-action');
+                if (!name || !action) return;
+                await toggleSso(name, action === 'enable', btn);
+            });
+        });
+    }
+
+    function renderGroupConfig() {
+        const container = document.getElementById('group-cards');
+        if (!container) return;
+        const isAdmin = hasRole('Admin');
+        if (!groupConfig) {
+            container.innerHTML = '<div class="text-sm text-slate-500">Нет данных о группах или нет доступа</div>';
+            document.getElementById('groups-meta')?.textContent = '—';
+            return;
+        }
+
+        const roles = [
+            { key: 'Admin', label: 'Администраторы', tone: 'emerald' },
+            { key: 'Support', label: 'Поддержка', tone: 'blue' },
+            { key: 'Read', label: 'Чтение', tone: 'slate' },
+        ];
+
+        container.innerHTML = roles.map(role => {
+            const builtin = groupConfig.builtin?.[role.key] || [];
+            const custom = groupConfig.custom?.[role.key] || [];
+            const effective = groupConfig.effective?.[role.key] || [];
+            const toneClass = role.tone === 'emerald' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : role.tone === 'blue' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-slate-50 text-slate-700 border-slate-200';
+
+            const customBadges = custom.length
+                ? custom.map(g => `<span class=\"inline-flex items-center gap-2 px-2 py-1 rounded-full border border-slate-200 bg-slate-50 text-xs text-slate-700 mr-2 mb-2\">${g}<button class=\"remove-group text-slate-400 hover:text-red-500\" data-role=\"${role.key}\" data-group=\"${g}\">×</button></span>`).join('')
+                : '<span class="text-xs text-slate-400">Нет пользовательских групп</span>';
+
+            const disabledOverlay = isAdmin ? '' : 'opacity-60 pointer-events-none';
+
+            return `
+                <div class="border border-slate-200 rounded-2xl p-4 shadow-sm bg-white">
+                    <div class="flex items-center justify-between mb-3">
+                        <div>
+                            <p class="text-xs uppercase tracking-wide text-slate-400">${role.label}</p>
+                            <div class="flex items-center gap-2 mt-1 text-sm text-slate-600">
+                                <span class="inline-flex items-center gap-2 px-2 py-1 rounded-full border ${toneClass}">Роль ${role.key}</span>
+                                <span class="text-xs text-slate-500">Встроенные: ${builtin.join(', ') || '—'}</span>
+                            </div>
+                        </div>
+                        <div class="text-xs text-slate-500">Итого: ${effective.length}</div>
+                    </div>
+                    <div class="mb-3">
+                        <p class="text-xs font-semibold text-slate-500 mb-2">Пользовательские группы</p>
+                        <div class="flex flex-wrap">${customBadges}</div>
+                    </div>
+                    <div class="flex items-center gap-2 ${disabledOverlay}">
+                        <input data-role="${role.key}" data-type="input" type="text" placeholder="sAMAccountName группы" class="flex-1 rounded-xl border border-slate-200 px-3 py-2 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none text-sm" />
+                        <button data-role="${role.key}" data-action="add" class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-500 text-white shadow hover:shadow-md transition-all text-sm">Добавить</button>
+                    </div>
+                </div>`;
+        }).join('');
+
+        const totalCustom = Object.values(groupConfig.custom || {}).reduce((acc, arr) => acc + (arr?.length || 0), 0);
+        document.getElementById('groups-meta')?.textContent = `${totalCustom} пользовательских групп`;
+
+        if (isAdmin) {
+            container.querySelectorAll('button.remove-group').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const role = btn.getAttribute('data-role');
+                    const group = btn.getAttribute('data-group');
+                    if (!role || !group) return;
+                    const updated = (groupConfig.custom?.[role] || []).filter(g => g !== group);
+                    await saveRoleGroups(role, updated);
+                });
+            });
+
+            container.querySelectorAll('button[data-action="add"]').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const role = btn.getAttribute('data-role');
+                    const input = container.querySelector(`input[data-role="${role}"][data-type="input"]`);
+                    if (!role || !input) return;
+                    const val = input.value.trim();
+                    if (!val) return;
+                    const existing = new Set(groupConfig.custom?.[role] || []);
+                    existing.add(val);
+                    input.value = '';
+                    await saveRoleGroups(role, Array.from(existing));
+                });
+            });
+        }
+    }
+
+    const restartModal = document.getElementById('restart-modal');
+    const restartServiceName = document.getElementById('restart-service-name');
+    const restartServiceId = document.getElementById('restart-service-id');
+    const restartMessage = document.getElementById('restart-result-message');
+    const restartCloseBtn = document.getElementById('restart-close');
+    const webOpModal = document.getElementById('webop-modal');
+    const webOpTitle = document.getElementById('webop-title');
+    const webOpSubtitle = document.getElementById('webop-subtitle');
+    const webOpMessage = document.getElementById('webop-message');
+    const webOpCloseBtn = document.getElementById('webop-close');
+    async function saveRoleGroups(role, groups) {
+        try {
+            const res = await fetchJSON('/auth/groups', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ role, groups })
+            });
+            groupConfig = res.config || res;
+            renderGroupConfig();
+        } catch (err) {
+            console.error('Не удалось обновить группы', err);
+        }
+    }
+
+    async function loadGroupConfig() {
+        if (!hasRole('Admin')) {
+            groupConfig = null;
+            renderGroupConfig();
+            return;
+        }
+        try {
+            const data = await fetchJSON('/auth/groups');
+            groupConfig = data;
+            renderGroupConfig();
+        } catch (err) {
+            console.error('Ошибка загрузки групп', err);
+            groupConfig = null;
+            renderGroupConfig();
+        }
+    }
+
+    function setStepState(stepId, state) {
+        const step = document.getElementById(stepId);
+        if (!step) return;
+        const icon = step.querySelector('.step-icon');
+        const title = step.querySelector('.step-title');
+        step.classList.remove('text-emerald-600', 'text-red-600');
+        let iconContent = '';
+        switch (state) {
+            case 'active':
+                iconContent = `<div class="h-10 w-10 rounded-full border-2 border-emerald-200 flex items-center justify-center text-emerald-500"><svg class="h-5 w-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v3m6 0h-3m3 0a9 9 0 11-6-3" /></svg></div>`;
+                step.classList.add('text-emerald-600');
+                break;
+            case 'success':
+                iconContent = `<div class="h-10 w-10 rounded-full bg-emerald-500 text-white flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg></div>`;
+                step.classList.add('text-emerald-600');
+                break;
+            case 'error':
+                iconContent = `<div class="h-10 w-10 rounded-full bg-red-500 text-white flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg></div>`;
+                step.classList.add('text-red-600');
+                break;
+            default:
+                iconContent = `<div class="h-10 w-10 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l3 3" /></svg></div>`;
+                break;
+        }
+        if (icon) {
+            icon.innerHTML = iconContent;
+        }
+        if (title) {
+            title.classList.toggle('text-slate-700', state === 'pending');
+        }
+    }
+
+    function openRestartModal(service) {
+        if (restartServiceName) restartServiceName.textContent = service.displayName || service.unitName;
+        if (restartServiceId) restartServiceId.textContent = service.unitName;
+        if (restartMessage) restartMessage.textContent = '';
+        if (restartCloseBtn) {
+            restartCloseBtn.disabled = true;
+            restartCloseBtn.classList.add('opacity-60', 'cursor-not-allowed');
+        }
+        setStepState('restart-step-1', 'active');
+        setStepState('restart-step-2', 'pending');
+        setStepState('restart-step-3', 'pending');
+        if (restartModal) restartModal.classList.remove('hidden');
+    }
+
+    function openWebOpModal(title, subtitle) {
+        if (webOpTitle) webOpTitle.textContent = title;
+        if (webOpSubtitle) webOpSubtitle.textContent = subtitle;
+        if (webOpMessage) webOpMessage.textContent = '';
+        if (webOpCloseBtn) {
+            webOpCloseBtn.disabled = true;
+            webOpCloseBtn.classList.add('opacity-60', 'cursor-not-allowed');
+        }
+        setStepState('web-step-1', 'active');
+        setStepState('web-step-2', 'pending');
+        setStepState('web-step-3', 'pending');
+        if (webOpModal) webOpModal.classList.remove('hidden');
+    }
+
+    function closeWebOpModal() {
+        if (webOpModal) webOpModal.classList.add('hidden');
+    }
+
+    function closeRestartModal() {
+        if (restartModal) restartModal.classList.add('hidden');
+    }
+
+    const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+    async function restartService(service, buttonEl) {
+        if (!canSupport()) {
+            alert('Недостаточно прав для перезапуска');
+            return;
+        }
+        openRestartModal(service);
+        if (buttonEl) {
+            buttonEl.disabled = true;
+            buttonEl.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+
+        let resultMessage = '';
+        let success = false;
+
+        try {
+            const res = await authFetch(`/api/monitoring/services/${encodeURIComponent(service.unitName)}/restart`, { method: 'POST' });
+            let data = { success: false, message: '', unit_name: service.unitName };
+            try {
+                data = await res.json();
+            } catch (err) {
+                data.message = 'Некорректный ответ API';
+            }
+
+            setStepState('restart-step-1', 'success');
+            setStepState('restart-step-2', 'active');
+            await delay(500);
+            setStepState('restart-step-2', 'success');
+            setStepState('restart-step-3', 'active');
+
+            success = Boolean(data.success);
+            resultMessage = data.message || (success ? 'Сервис перезапущен' : 'Не удалось перезапустить сервис');
+            setStepState('restart-step-3', success ? 'success' : 'error');
+
+            if (success) {
+                loadServices();
+            }
+        } catch (error) {
+            console.error('Restart error', error);
+            setStepState('restart-step-1', 'error');
+            setStepState('restart-step-3', 'error');
+            resultMessage = `Не удалось выполнить запрос к API: ${error}`;
+        } finally {
+            if (restartMessage) restartMessage.textContent = resultMessage;
+            if (restartCloseBtn) {
+                restartCloseBtn.disabled = false;
+                restartCloseBtn.classList.remove('opacity-60', 'cursor-not-allowed');
+            }
+            if (buttonEl) {
+                buttonEl.disabled = false;
+                buttonEl.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
+    }
+
+    function renderServicesTable(services) {
+        const body = document.getElementById('services-body');
+        if (!body) return;
+        body.innerHTML = services.map(svc => {
+            const statusBadge = svc.active
+                ? '<span class="px-2 py-1 text-xs rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100">Активен</span>'
+                : '<span class="px-2 py-1 text-xs rounded-lg bg-red-50 text-red-600 border border-red-100">Остановлен</span>';
+            const enabledBadge = svc.enabled
+                ? '<span class="px-2 py-1 text-xs rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100">Вкл</span>'
+                : '<span class="px-2 py-1 text-xs rounded-lg bg-slate-100 text-slate-600 border border-slate-200">Выкл</span>';
+            const canRestart = canSupport();
+            const restartBtn = canRestart
+                ? `<button class="restart-btn inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-900 text-white hover:bg-emerald-600 transition-all" data-unit="${svc.id}" data-display="${svc.display_name}">
+                        <svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-4 w-4\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M4.5 4.5v6h6m9-3a9 9 0 11-9-9\" /></svg>
+                        Перезапустить
+                    </button>`
+                : '<span class="inline-block h-2.5 w-2.5 rounded-full bg-slate-300" title="Нет доступа"></span>';
+            return `<tr class="hover:bg-slate-50 transition-colors" data-unit="${svc.id}">
+                <td class="px-4 py-3 text-sm text-slate-800 font-medium">${svc.display_name}<div class="text-xs text-slate-500">${svc.id}</div></td>
+                <td class="px-4 py-3 text-sm text-slate-700">${svc.category}</td>
+                <td class="px-4 py-3 text-sm text-slate-700">${svc.port ?? '—'}</td>
+                <td class="px-4 py-3 text-sm">${statusBadge}</td>
+                <td class="px-4 py-3 text-sm">${enabledBadge}</td>
+                <td class="px-4 py-3 text-sm">
+                    <div class="flex flex-wrap gap-2">
+                        <button class="log-btn inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-100 text-slate-800 hover:bg-slate-200 transition-all" data-unit="${svc.id}" data-display="${svc.display_name}">
+                            <svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-4 w-4\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M3.75 4.5h16.5M3.75 9h16.5M3.75 13.5h8.25m-8.25 4.5h8.25\"/></svg>
+                            Лог
+                        </button>
+                        ${restartBtn}
+                    </div>
+                </td>
+            </tr>`;
+        }).join('');
+    }
+
+    async function performWebOperation({ actionLabel, name, requestFn, onSuccess, buttonEl }) {
+        if (buttonEl) {
+            buttonEl.disabled = true;
+            buttonEl.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+
+        openWebOpModal(`${actionLabel} — ${name}`, name);
+
+        let success = false;
+        let resultMessage = '';
+        try {
+            setStepState('web-step-1', 'active');
+            const data = await requestFn();
+            setStepState('web-step-1', 'success');
+
+            setStepState('web-step-2', 'active');
+            await new Promise((resolve) => setTimeout(resolve, 600));
+            setStepState('web-step-2', 'success');
+
+            setStepState('web-step-3', 'active');
+            success = data?.success !== false;
+            resultMessage = data?.message || `${actionLabel} завершена`;
+            setStepState('web-step-3', success ? 'success' : 'error');
+
+            if (success && typeof onSuccess === 'function') {
+                await onSuccess();
+            }
+        } catch (err) {
+            resultMessage = `Ошибка: ${err?.message || err}`;
+            setStepState('web-step-1', 'error');
+            setStepState('web-step-3', 'error');
+        } finally {
+            if (webOpMessage) webOpMessage.textContent = resultMessage;
+            if (webOpCloseBtn) {
+                webOpCloseBtn.disabled = false;
+                webOpCloseBtn.classList.remove('opacity-60', 'cursor-not-allowed');
+            }
+            if (buttonEl) {
+                buttonEl.disabled = false;
+                buttonEl.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
+    }
+
+    async function publishInfobase(name, buttonEl) {
+        if (!hasRole('Admin')) {
+            return;
+        }
+        await performWebOperation({
+            actionLabel: 'Публикация',
+            name,
+            buttonEl,
+            requestFn: async () => {
+                const resp = await authFetch(`/api/infobases/${encodeURIComponent(name)}/publish`, { method: 'POST' });
+                const parsed = await parseJsonResponse(resp);
+                if (parsed.parseError) {
+                    throw new Error(`Некорректный ответ: ${parsed.raw || ''}`);
+                }
+                const data = parsed.data || {};
+                if (!resp.ok || data.success === false) {
+                    throw new Error(data.detail || data.message || 'Ошибка публикации');
+                }
+                return data;
+            },
+            onSuccess: async () => {
+                await loadWebPublications();
+            }
+        });
+    }
+
+    async function deleteWebPublication(name, buttonEl) {
+        if (!hasRole('Admin')) {
+            return;
+        }
+        await performWebOperation({
+            actionLabel: 'Удаление публикации',
+            name,
+            buttonEl,
+            requestFn: async () => {
+                const resp = await authFetch(`/api/webpublications/${encodeURIComponent(name)}`, { method: 'DELETE' });
+                const parsed = await parseJsonResponse(resp);
+                if (parsed.parseError) {
+                    throw new Error(`Некорректный ответ: ${parsed.raw || ''}`);
+                }
+                const data = parsed.data || {};
+                if (!resp.ok || !data.success) {
+                    throw new Error(data.detail || data.message || 'Ошибка удаления');
+                }
+                return data;
+            },
+            onSuccess: async () => {
+                await loadWebPublications();
+            }
+        });
+    }
+
+    async function toggleSso(name, enable, buttonEl) {
+        if (!canSupport()) {
+            return;
+        }
+        await performWebOperation({
+            actionLabel: enable ? 'Включение SSO' : 'Отключение SSO',
+            name,
+            buttonEl,
+            requestFn: async () => {
+                const path = enable ? 'enable' : 'disable';
+                const resp = await authFetch(`/api/webpublications/${encodeURIComponent(name)}/sso/${path}`, { method: 'POST' });
+                const parsed = await parseJsonResponse(resp);
+                if (parsed.parseError) {
+                    throw new Error(`Некорректный ответ: ${parsed.raw || ''}`);
+                }
+                const data = parsed.data || {};
+                if (!resp.ok || data.success === false) {
+                    throw new Error(data.detail || data.message || 'Ошибка SSO операции');
+                }
+                return data;
+            },
+            onSuccess: async () => {
+                await loadWebPublications();
+            }
+        });
+    }
+
+    async function loadWebPublications(rerenderInfobases = true) {
+        try {
+            const data = await fetchJSON('/api/webpublications');
+            webPublications = data.publications || [];
+            buildWebMap(webPublications);
+            setText('webpub-meta', `${webPublications.length} публикаций`);
+            renderWebPublicationsTable(webPublications);
+            if (rerenderInfobases && currentInfobases.length) {
+                renderInfobasesTable(currentInfobases);
+            }
+        } catch (err) {
+            console.error('Ошибка загрузки публикаций', err);
+        }
+    }
+
+    async function loadData() {
+        try {
+            const [cluster, infobases, sessions, processes, connections, locks, licenses, webpubs] = await Promise.all([
+                fetchJSON('/api/cluster'),
+                fetchJSON('/api/infobases'),
+                fetchJSON('/api/sessions'),
+                fetchJSON('/api/processes'),
+                fetchJSON('/api/connections'),
+                fetchJSON('/api/locks'),
+                fetchJSON('/api/licenses'),
+                fetchJSON('/api/webpublications'),
+            ]);
+
+            webPublications = webpubs.publications || [];
+            buildWebMap(webPublications);
+            setText('webpub-meta', `${webPublications.length} публикаций`);
+
+            currentInfobases = infobases.infobases || [];
+
+            setText('summary-infobases', currentInfobases.length ?? '-');
+            setText('summary-sessions', sessions.sessions?.length ?? '-');
+            setText('summary-processes', processes.processes?.length ?? '-');
+            setText('summary-connections', connections.connections?.length ?? '-');
+
+            setText('infobases-meta', `${currentInfobases.length ?? 0} элементов`);
+            setText('sessions-meta', `${sessions.sessions?.length ?? 0} активных`);
+            setText('processes-meta', `${processes.processes?.length ?? 0} процессов`);
+            setText('connections-meta', `${connections.connections?.length ?? 0} соединений`);
+            setText('locks-meta', `${locks.locks?.length ?? 0} блокировок`);
+            setText('licenses-meta', `${licenses.licenses?.length ?? 0} записей`);
+
+            renderInfobasesTable(currentInfobases);
+            renderWebPublicationsTable(webPublications);
+            renderTable('sessions-body', sessions.sessions ?? [], ['session', 'user-name', 'infobase', 'host', 'app-id']);
+            renderTable('processes-body', processes.processes ?? [], ['process', 'host', 'port', 'pid', 'available-perfomance']);
+            renderTable('connections-body', connections.connections ?? [], ['connection', 'host', 'process', 'infobase', 'application']);
+            renderTable('locks-body', locks.locks ?? [], ['session', 'connection', 'descr']);
+            renderTable('licenses-body', licenses.licenses ?? [], ['user-name', 'host', 'series', 'license-type']);
+        } catch (err) {
+            console.error(err);
+            setText('status-label', 'Ошибка');
+            const badge = document.getElementById('status-label');
+            if (badge) {
+                badge.classList.add('text-red-500');
+            }
+        }
+    }
+
+    let selectedService = null;
+    let selectedServiceName = '';
+
+    function openLogModal(unit, displayName) {
+        selectedService = unit;
+        selectedServiceName = displayName || unit;
+        const title = document.getElementById('log-service-title');
+        const pre = document.getElementById('modal-service-logs');
+        if (title) title.textContent = selectedServiceName;
+        if (pre) pre.textContent = 'Загрузка логов...';
+        const modal = document.getElementById('log-modal');
+        if (modal) modal.classList.remove('hidden');
+        loadServiceLogs(unit);
+    }
+
+    function closeLogModal() {
+        const modal = document.getElementById('log-modal');
+        if (modal) modal.classList.add('hidden');
+    }
+
+    async function loadMonitoringSummary() {
+        try {
+            const summary = await fetchJSON('/api/monitoring/summary');
+            const cpuUsage = summary.cpu?.usage_percent ?? 0;
+            setText('cpu-usage', `${cpuUsage.toFixed(1)} %`);
+            renderPerCpu(summary.cpu?.per_cpu || []);
+
+            const mem = summary.memory || {};
+            setText('memory-usage', formatPercent(mem.usage_percent));
+            setText('memory-meta', `${mem.used_mb ?? '-'} MB / ${mem.total_mb ?? '-'} MB`);
+            const memBar = document.getElementById('memory-bar');
+            if (memBar) memBar.style.width = `${mem.usage_percent ?? 0}%`;
+
+            const disk = summary.disk || {};
+            setText('disk-usage', formatPercent(disk.usage_percent));
+            setText('disk-meta', `${disk.used_gb ?? '-'} GB / ${disk.total_gb ?? '-'} GB`);
+            const diskBar = document.getElementById('disk-bar');
+            if (diskBar) diskBar.style.width = `${disk.usage_percent ?? 0}%`;
+        } catch (err) {
+            console.error('Monitoring summary error', err);
+        }
+    }
+
+    async function loadServices() {
+        try {
+            const data = await fetchJSON('/api/monitoring/services');
+            const services = data.services || [];
+            setText('services-meta', `${services.length} сервисов`);
+            renderServicesTable(services);
+
+            document.querySelectorAll('.restart-btn').forEach(btn => {
+                btn.addEventListener('click', async (event) => {
+                    event.stopPropagation();
+                    const unit = btn.getAttribute('data-unit');
+                    const display = btn.getAttribute('data-display') || unit;
+                    if (!unit) return;
+                    restartService({ unitName: unit, displayName: display }, btn);
+                });
+            });
+
+            document.querySelectorAll('.log-btn').forEach(btn => {
+                btn.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    const unit = btn.getAttribute('data-unit');
+                    const name = btn.getAttribute('data-display') || unit;
+                    if (unit) {
+                        openLogModal(unit, name);
+                    }
+                });
+            });
+        } catch (err) {
+            console.error('Monitoring services error', err);
+        }
+    }
+
+    async function loadServiceLogs(unit) {
+        try {
+            const data = await fetchJSON(`/api/monitoring/services/${unit}/logs?lines=120`);
+            const pre = document.getElementById('modal-service-logs');
+            if (pre) {
+                pre.textContent = (data.logs || []).join('\n');
+            }
+        } catch (err) {
+            console.error('Logs load error', err);
+            const pre = document.getElementById('modal-service-logs');
+            if (pre) {
+                pre.textContent = 'Не удалось загрузить логи.';
+            }
+        }
+    }
+
+    const closeLogBtn = document.getElementById('close-log');
+    if (closeLogBtn) {
+        closeLogBtn.addEventListener('click', () => closeLogModal());
+    }
+
+    const refreshLogBtn = document.getElementById('refresh-log');
+    if (refreshLogBtn) {
+        refreshLogBtn.addEventListener('click', () => {
+            if (selectedService) {
+                loadServiceLogs(selectedService);
+            }
+        });
+    }
+
+    const logModal = document.getElementById('log-modal');
+    if (logModal) {
+        logModal.addEventListener('click', (e) => {
+            if (e.target === logModal) {
+                closeLogModal();
+            }
+        });
+    }
+
+    // Login modal handling
+    const loginModal = document.getElementById('login-modal');
+    const loginForm = document.getElementById('login-form');
+    const loginClose = document.getElementById('login-close');
+    const loginCancel = document.getElementById('login-cancel');
+    const loginBtn = document.getElementById('login-btn');
+    const loginError = document.getElementById('login-error');
+
+    function openLoginModal() {
+        if (loginError) loginError.textContent = '';
+        const form = document.getElementById('login-form');
+        if (form) form.reset();
+        if (loginModal) loginModal.classList.remove('hidden');
+    }
+
+    function closeLoginModal() {
+        if (loginModal) loginModal.classList.add('hidden');
+    }
+
+    if (loginBtn) {
+        loginBtn.addEventListener('click', () => openLoginModal());
+    }
+
+    if (loginClose) {
+        loginClose.addEventListener('click', () => closeLoginModal());
+    }
+
+    if (loginCancel) {
+        loginCancel.addEventListener('click', () => closeLoginModal());
+    }
+
+    if (loginModal) {
+        loginModal.addEventListener('click', (e) => {
+            if (e.target === loginModal) {
+                closeLoginModal();
+            }
+        });
+    }
+
+    if (loginForm) {
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (loginError) loginError.textContent = '';
+            const formData = new FormData(loginForm);
+            const username = formData.get('username');
+            const password = formData.get('password');
+            try {
+                const resp = await fetch('/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const parsed = await parseJsonResponse(resp);
+                if (parsed.parseError) {
+                    throw new Error(parsed.raw || 'Некорректный ответ');
+                }
+                const data = parsed.data;
+                if (!resp.ok || data.success === false) {
+                    throw new Error(data.detail || data.message || 'Ошибка авторизации');
+                }
+                setAuthToken(data.token);
+                currentUser = data.user || {};
+                try {
+                    localStorage.setItem('rasCurrentUser', JSON.stringify(currentUser));
+                } catch (err) {
+                    console.warn('Не удалось сохранить пользователя', err);
+                }
+                updateUserBadge();
+                closeLoginModal();
+                await loadData();
+                await loadMonitoringSummary();
+                await loadServices();
+                await loadGroupConfig();
+            } catch (err) {
+                if (loginError) {
+                    loginError.textContent = err?.message || 'Ошибка авторизации';
+                }
+            }
+        });
+    }
+
+    if (restartCloseBtn) {
+        restartCloseBtn.addEventListener('click', () => closeRestartModal());
+    }
+
+    if (restartModal) {
+        restartModal.addEventListener('click', (e) => {
+            if (e.target === restartModal && !restartCloseBtn?.disabled) {
+                closeRestartModal();
+            }
+        });
+    }
+
+    if (webOpCloseBtn) {
+        webOpCloseBtn.addEventListener('click', () => closeWebOpModal());
+    }
+
+    if (webOpModal) {
+        webOpModal.addEventListener('click', (e) => {
+            if (e.target === webOpModal && !webOpCloseBtn?.disabled) {
+                closeWebOpModal();
+            }
+        });
+    }
+
+    async function checkHealth() {
+        try {
+            const res = await fetchJSON('/health');
+            const label = document.getElementById('status-label');
+            if (label) {
+                label.textContent = res.status === 'ok' ? 'Online' : 'Degraded';
+                label.classList.toggle('text-emerald-600', res.status === 'ok');
+                label.classList.toggle('text-yellow-500', res.status !== 'ok');
+            }
+        } catch (err) {
+            const label = document.getElementById('status-label');
+            if (label) {
+                label.textContent = 'Offline';
+                label.classList.add('text-red-500');
+            }
+        }
+    }
+
+    document.getElementById('refresh-all').addEventListener('click', () => {
+        checkHealth();
+        loadData();
+    });
+
+    const refreshMonitoringBtn = document.getElementById('refresh-monitoring');
+    if (refreshMonitoringBtn) {
+        refreshMonitoringBtn.addEventListener('click', () => {
+            loadMonitoringSummary();
+            loadServices();
+            if (selectedService) {
+                loadServiceLogs(selectedService);
+            }
+        });
+    }
+
+    async function initializeDashboard() {
+        await loadCurrentUser();
+        await loadGroupConfig();
+        checkHealth();
+        await loadData();
+        loadMonitoringSummary();
+        loadServices();
+        setInterval(loadMonitoringSummary, 20000);
+    }
+
+    initializeDashboard().catch(err => console.error('Init error', err));
+    });
+</script>
+
+<!-- Login Modal -->
+<div id="login-modal" class="hidden fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center px-4">
+    <div class="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md space-y-4 border border-slate-100">
+        <div class="flex items-start justify-between">
+            <div>
+                <p class="text-xs uppercase tracking-wide text-slate-500">Аутентификация</p>
+                <h3 class="text-xl font-semibold text-slate-900">Войти в панель</h3>
+                <p class="text-sm text-slate-500">Если SSO недоступен, используйте доменные учетные данные</p>
+            </div>
+            <button id="login-close" class="text-slate-400 hover:text-slate-600 transition">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+
+        <form id="login-form" class="space-y-4">
+            <div class="space-y-2">
+                <label class="text-sm font-medium text-slate-700">Пользователь</label>
+                <input name="username" type="text" required class="w-full rounded-xl border border-slate-200 px-3 py-2 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none" placeholder="user@fd.local или DOMAIN\\user" />
+            </div>
+            <div class="space-y-2">
+                <label class="text-sm font-medium text-slate-700">Пароль</label>
+                <input name="password" type="password" required class="w-full rounded-xl border border-slate-200 px-3 py-2 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none" />
+            </div>
+            <p id="login-error" class="text-sm text-red-500 min-h-[20px]"></p>
+            <div class="flex items-center justify-end gap-3">
+                <button type="button" id="login-cancel" class="px-4 py-2 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50">Отмена</button>
+                <button type="submit" class="px-4 py-2 rounded-xl bg-emerald-500 text-white shadow-lg hover:shadow-xl">Войти</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Restart Modal -->
+<div id="restart-modal" class="hidden fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center px-4">
+    <div class="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-xl space-y-5 border border-slate-100">
+        <div class="flex items-start justify-between gap-4">
+            <div>
+                <p class="text-xs uppercase tracking-wide text-slate-500">Перезапуск сервиса</p>
+                <h3 id="restart-service-name" class="text-2xl font-semibold text-slate-900">—</h3>
+                <p class="text-sm text-slate-500" id="restart-service-id">—</p>
+            </div>
+            <div class="h-10 w-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-inner">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v3m0 12v3m6-9h3M3 12h3m10.607-5.657l2.121-2.121M5.272 18.728l2.121-2.121m0-8.486L5.272 5.272m11.314 11.314 2.121 2.121"/></svg>
+            </div>
+        </div>
+
+        <div class="space-y-4">
+            <div id="restart-step-1" class="flex items-center gap-3 text-slate-700">
+                <div class="step-icon"></div>
+                <div>
+                    <p class="step-title text-sm font-semibold">Отправка команды systemctl…</p>
+                    <p class="text-xs text-slate-500">Инициализация перезапуска</p>
+                </div>
+            </div>
+            <div id="restart-step-2" class="flex items-center gap-3 text-slate-700">
+                <div class="step-icon"></div>
+                <div>
+                    <p class="step-title text-sm font-semibold">Ожидание завершения…</p>
+                    <p class="text-xs text-slate-500">Контроль статуса systemd</p>
+                </div>
+            </div>
+            <div id="restart-step-3" class="flex items-center gap-3 text-slate-700">
+                <div class="step-icon"></div>
+                <div>
+                    <p class="step-title text-sm font-semibold">Результат</p>
+                    <p class="text-xs text-slate-500">Финальный статус операции</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="rounded-xl border border-slate-100 bg-slate-50 p-4">
+            <p class="text-sm text-slate-700" id="restart-result-message"></p>
+        </div>
+
+        <div class="flex justify-end">
+            <button id="restart-close" disabled class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-900 text-white opacity-60 cursor-not-allowed transition-all">
+                Закрыть
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Web publish/delete Modal -->
+<div id="webop-modal" class="hidden fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center px-4">
+    <div class="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-xl space-y-5 border border-slate-100">
+        <div class="flex items-start justify-between gap-4">
+            <div>
+                <p class="text-xs uppercase tracking-wide text-slate-500">WEB публикация</p>
+                <h3 id="webop-title" class="text-2xl font-semibold text-slate-900">—</h3>
+                <p class="text-sm text-slate-500" id="webop-subtitle">—</p>
+            </div>
+            <div class="h-10 w-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-inner">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v3m0 12v3m6-9h3M3 12h3m10.607-5.657l2.121-2.121M5.272 18.728l2.121-2.121m0-8.486L5.272 5.272m11.314 11.314 2.121 2.121"/></svg>
+            </div>
+        </div>
+
+        <div class="space-y-4">
+            <div id="web-step-1" class="flex items-center gap-3 text-slate-700">
+                <div class="step-icon"></div>
+                <div>
+                    <p class="step-title text-sm font-semibold">Отправка команды webinst…</p>
+                    <p class="text-xs text-slate-500">Инициализация операции</p>
+                </div>
+            </div>
+            <div id="web-step-2" class="flex items-center gap-3 text-slate-700">
+                <div class="step-icon"></div>
+                <div>
+                    <p class="step-title text-sm font-semibold">Ожидание завершения…</p>
+                    <p class="text-xs text-slate-500">Применение изменений Apache</p>
+                </div>
+            </div>
+            <div id="web-step-3" class="flex items-center gap-3 text-slate-700">
+                <div class="step-icon"></div>
+                <div>
+                    <p class="step-title text-sm font-semibold">Результат</p>
+                    <p class="text-xs text-slate-500">Статус операции</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="rounded-xl border border-slate-100 bg-slate-50 p-4">
+            <p class="text-sm text-slate-700" id="webop-message"></p>
+        </div>
+
+        <div class="flex justify-end">
+            <button id="webop-close" disabled class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-900 text-white opacity-60 cursor-not-allowed transition-all">
+                Закрыть
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Log Modal -->
+<div id="log-modal" class="hidden fixed inset-0 z-30 bg-black/50 backdrop-blur-sm flex items-center justify-center px-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[80vh] overflow-hidden">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50">
+            <div>
+                <p class="text-xs uppercase tracking-wide text-slate-500">Логи сервиса</p>
+                <h4 id="log-service-title" class="text-lg font-semibold text-slate-900">—</h4>
+            </div>
+            <div class="flex items-center gap-2">
+                <button id="refresh-log" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-900 text-white hover:bg-emerald-600 transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 4.5v6h6m9-3a9 9 0 11-9-9"/></svg>
+                    Обновить
+                </button>
+                <button id="close-log" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-100 text-slate-800 hover:bg-slate-200 transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                    Закрыть
+                </button>
+            </div>
+        </div>
+        <div class="p-6 bg-slate-50 border-t border-slate-200">
+            <pre id="modal-service-logs" class="h-[60vh] overflow-auto text-xs text-slate-800 font-mono whitespace-pre-wrap bg-white rounded-xl border border-slate-200 p-4"></pre>
+        </div>
+    </div>
+</div>
+</body>
+</html>
