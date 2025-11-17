@@ -162,6 +162,8 @@ def _fetch_groups(username: str, upn: str | None = None) -> List[str]:
         logger.error("LDAP search failed: %s", exc)
         raise HTTPException(status_code=500, detail="Ошибка запроса LDAP")
 
+    logger.info("LDAP search for %s returned %d entries", username, len(conn.entries))
+
     if not conn.entries:
         logger.warning("User %s not found in LDAP", username)
         return []
@@ -172,6 +174,7 @@ def _fetch_groups(username: str, upn: str | None = None) -> List[str]:
         match = re.search(r"CN=([^,]+)", str(dn))
         if match:
             groups.append(match.group(1))
+    logger.info("Groups resolved for %s: %s", username, groups)
     return groups
 
 
@@ -217,6 +220,11 @@ def authenticate_basic(username: str, password: str, gss_name: str | None = None
 
     server = _server()
     user_part = username
+    logger.info(
+        "Authenticating via LDAP bind: user=%s, gss_name=%s",
+        user_part,
+        gss_name or "<none>",
+    )
     try:
         Connection(
             server,
@@ -231,9 +239,16 @@ def authenticate_basic(username: str, password: str, gss_name: str | None = None
 
     norm_user, domain = _normalize_remote_user(user_part)
     upn = f"{norm_user}@{domain}" if domain else f"{norm_user}@fd.local"
+    logger.info(
+        "LDAP bind succeeded for %s; resolved domain=%s, upn=%s",
+        norm_user,
+        domain or "<none>",
+        upn,
+    )
     groups = _fetch_groups(norm_user, upn)
     roles = _roles_from_groups(groups)
     if not roles:
+        logger.warning("User %s has no allowed roles; groups=%s", norm_user, groups)
         raise HTTPException(status_code=403, detail="Нет разрешенных ролей")
 
     return UserContext(
@@ -264,6 +279,7 @@ async def get_current_user(
             logger.error("Invalid Basic auth header: %s", exc)
             raise HTTPException(status_code=401, detail="Некорректные учетные данные")
 
+        logger.info("Basic auth header received for user=%s", user_part)
         return authenticate_basic(user_part, password, gss_name=gss_name)
 
     # Allow anonymous access when Apache/GSS headers are missing so the
@@ -280,12 +296,21 @@ async def get_current_user(
         )
 
     username, domain = _normalize_remote_user(remote_user)
+    logger.info(
+        "Resolving user from headers: remote_user=%s, gss_name=%s, domain=%s",
+        remote_user,
+        gss_name or "<none>",
+        domain or "<none>",
+    )
     upn = f"{username}@{domain}" if domain else f"{username}@fd.local"
 
     groups = _fetch_groups(username, upn)
     roles = _roles_from_groups(groups)
 
     if not roles:
+        logger.warning(
+            "User %s has no allowed roles (header flow); groups=%s", username, groups
+        )
         raise HTTPException(status_code=403, detail="Нет разрешенных ролей")
 
     return UserContext(
