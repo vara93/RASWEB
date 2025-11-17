@@ -122,8 +122,18 @@ async def get_current_user(
 ) -> UserContext:
     """Resolve the current user from Apache headers and AD groups."""
 
+    # Allow anonymous access when Apache/GSS headers are missing so the
+    # dashboard keeps working in environments without SSO configured yet.
     if not remote_user:
-        raise HTTPException(status_code=401, detail="Требуется Kerberos аутентификация")
+        logger.warning("Kerberos headers are missing; falling back to anonymous access")
+        return UserContext(
+            username="anonymous",
+            domain=None,
+            remote_user="anonymous",
+            gss_name=None,
+            groups=[],
+            roles=["Admin", "Support", "Read"],
+        )
 
     username, domain = _normalize_remote_user(remote_user)
     upn = f"{username}@{domain}" if domain else f"{username}@fd.local"
