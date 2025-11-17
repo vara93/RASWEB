@@ -713,7 +713,8 @@
         const isAdmin = hasRole('Admin');
         if (!groupConfig) {
             container.innerHTML = '<div class="text-sm text-slate-500">Нет данных о группах или нет доступа</div>';
-            document.getElementById('groups-meta')?.textContent = '—';
+            const groupsMeta = document.getElementById('groups-meta');
+            if (groupsMeta) groupsMeta.textContent = '—';
             return;
         }
 
@@ -759,7 +760,8 @@
         }).join('');
 
         const totalCustom = Object.values(groupConfig.custom || {}).reduce((acc, arr) => acc + (arr?.length || 0), 0);
-        document.getElementById('groups-meta')?.textContent = `${totalCustom} пользовательских групп`;
+        const groupsMeta = document.getElementById('groups-meta');
+        if (groupsMeta) groupsMeta.textContent = `${totalCustom} пользовательских групп`;
 
         if (isAdmin) {
             container.querySelectorAll('button.remove-group').forEach(btn => {
