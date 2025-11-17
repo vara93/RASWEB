@@ -279,6 +279,7 @@
                                         <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Имя ИБ</th>
                                         <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">URL</th>
                                         <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Директория</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">SSO</th>
                                         <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">UUID</th>
                                         <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Действия</th>
                                     </tr>
@@ -474,7 +475,7 @@
             const descr = row.descr || '';
             const pub = webPublicationsMap[name];
             const webCell = pub
-                ? `<div class=\"flex items-center gap-2 flex-wrap\"><span class=\"px-3 py-1 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700 text-xs\">Опубликована.</span></div>`
+                ? `<div class=\"flex items-center gap-2 flex-wrap\"><span class=\"px-3 py-1 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700 text-xs\">Опубликована</span>${pub.sso_enabled ? '<span class=\\"px-2 py-0.5 rounded-full text-[11px] bg-emerald-100 text-emerald-700 border border-emerald-200\\">SSO</span>' : ''}</div>`
                 : `<button class=\"publish-btn inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-all text-sm\" data-name=\"${name}\">Публикация в Web</button>`;
             return `<tr class=\"hover:bg-slate-50 transition-colors\">`+
                 `<td class=\"px-4 py-3 text-sm text-slate-800 font-medium\">${name}</td>`+
@@ -499,12 +500,27 @@
         const body = document.getElementById('webpub-body');
         if (!body) return;
         body.innerHTML = (pubs || []).map(pub => {
+            const ssoBadge = pub.sso_enabled
+                ? '<span class="px-2 py-1 text-xs rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100">Вкл</span>'
+                : '<span class="px-2 py-1 text-xs rounded-lg bg-slate-100 text-slate-600 border border-slate-200">Выкл</span>';
+            const ssoActionLabel = pub.sso_enabled ? 'Отключить SSO' : 'Включить SSO';
+            const ssoActionClass = pub.sso_enabled
+                ? 'bg-white text-slate-800 border border-slate-200 hover:bg-slate-50'
+                : 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100';
+            const ssoActionAttr = `data-action="${pub.sso_enabled ? 'disable' : 'enable'}"`;
+
             return `<tr class=\"hover:bg-slate-50 transition-colors\">`+
                 `<td class=\"px-4 py-3 text-sm text-slate-800 font-medium\">${pub.infobase_name || pub.wsdir}</td>`+
                 `<td class=\"px-4 py-3 text-sm text-slate-700\">${pub.url}</td>`+
                 `<td class=\"px-4 py-3 text-sm text-slate-700\">${pub.dir}</td>`+
+                `<td class=\"px-4 py-3 text-sm text-slate-700\">${ssoBadge}</td>`+
                 `<td class=\"px-4 py-3 text-sm text-slate-700\">${pub.infobase_uuid ?? '—'}</td>`+
-                `<td class=\"px-4 py-3 text-sm\"><button class=\"delete-web-btn inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition-all text-sm\" data-name=\"${pub.wsdir}\">Удалить</button></td>`+
+                `<td class=\"px-4 py-3 text-sm\">`+
+                    `<div class=\"flex flex-wrap gap-2\">`+
+                        `<button class=\"sso-web-btn inline-flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all text-sm ${ssoActionClass}\" data-name=\"${pub.wsdir}\" ${ssoActionAttr}>${ssoActionLabel}</button>`+
+                        `<button class=\"delete-web-btn inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition-all text-sm\" data-name=\"${pub.wsdir}\">Удалить</button>`+
+                    `</div>`+
+                `</td>`+
                 `</tr>`;
         }).join('');
 
@@ -515,6 +531,16 @@
                 if (name) {
                     await deleteWebPublication(name, btn);
                 }
+            });
+        });
+
+        document.querySelectorAll('.sso-web-btn').forEach(btn => {
+            btn.addEventListener('click', async (event) => {
+                event.stopPropagation();
+                const name = btn.getAttribute('data-name');
+                const action = btn.getAttribute('data-action');
+                if (!name || !action) return;
+                await toggleSso(name, action === 'enable', btn);
             });
         });
     }
@@ -755,6 +781,26 @@
                 const data = await resp.json();
                 if (!resp.ok || !data.success) {
                     throw new Error(data.detail || data.message || 'Ошибка удаления');
+                }
+                return data;
+            },
+            onSuccess: async () => {
+                await loadWebPublications();
+            }
+        });
+    }
+
+    async function toggleSso(name, enable, buttonEl) {
+        await performWebOperation({
+            actionLabel: enable ? 'Включение SSO' : 'Отключение SSO',
+            name,
+            buttonEl,
+            requestFn: async () => {
+                const path = enable ? 'enable' : 'disable';
+                const resp = await fetch(`/api/webpublications/${encodeURIComponent(name)}/sso/${path}`, { method: 'POST' });
+                const data = await resp.json();
+                if (!resp.ok || data.success === false) {
+                    throw new Error(data.detail || data.message || 'Ошибка SSO операции');
                 }
                 return data;
             },

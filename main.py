@@ -137,6 +137,30 @@ async def api_web_publications() -> Dict[str, List[Dict[str, object]]]:
     return {"publications": [pub.__dict__ for pub in pubs]}
 
 
+@app.post("/api/webpublications/{name}/sso/enable")
+async def api_enable_sso(name: str) -> Dict[str, object]:
+    logger.info("Enable SSO requested for publication: %s", name)
+    try:
+        web_publish.enable_sso(name)
+    except RuntimeError as exc:
+        logger.exception("Failed to enable SSO for %s", name)
+        raise HTTPException(status_code=500, detail=str(exc))
+
+    return {"success": True, "message": "SSO включено", "name": name}
+
+
+@app.post("/api/webpublications/{name}/sso/disable")
+async def api_disable_sso(name: str) -> Dict[str, object]:
+    logger.info("Disable SSO requested for publication: %s", name)
+    try:
+        web_publish.disable_sso(name)
+    except RuntimeError as exc:
+        logger.exception("Failed to disable SSO for %s", name)
+        raise HTTPException(status_code=500, detail=str(exc))
+
+    return {"success": True, "message": "SSO отключено", "name": name}
+
+
 @app.post("/api/infobases/{name}/publish")
 async def api_publish_infobase(name: str) -> Dict[str, object]:
     logger.info("Publish request for infobase: %s", name)

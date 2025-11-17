@@ -18,6 +18,10 @@ WEB_BASE_DIR = "/var/www/1C"
 DESCRIPTOR_TEMPLATE = "/home/administrator/default.vrd"
 ONEC_SERVER = "t03-1c11.fd.local"
 
+SSO_MARK_TEMPLATE = "# 1c sso {wsdir}"
+SSO_SNIPPET_TEMPLATE = """# 1c sso {wsdir}
+<LocationMatch \"^/(?!server-status|server-info|icons/|\\.well-known/(?:acme-challenge/)?)(?:{wsdir})(?:/|$)\">\n    AuthType GSSAPI\n    AuthName \"Kerberos Login\"\n    Require valid-user\n\n    # серверный keytab с HTTP/FQDN\n    GssapiCredStore keytab:/etc/1C/http/http1cv8.keytab\n    GssapiCredStore client_keytab:/etc/1C/http/http1cv8.keytab\n    # Передача билета в 1С;\n    GssapiDelegCcacheDir /var/krb/1c\n    GssapiDelegCcacheUnique On\n\n    GssapiLocalName Off\n\n    # диагностика\n    Header always set X-Remote-User \"expr=%{REMOTE_USER}\"\n    Header always set X-GSS-Name    \"%{GSS_NAME}e\"\n</LocationMatch>\n"""
+
 
 @dataclass
 class WebPublication:
@@ -30,10 +34,29 @@ class WebPublication:
     url: str
     descriptor_path: str
     conn_str: str
+    sso_enabled: bool = False
 
 
 _ALIAS_RE = re.compile(r'^Alias\s+"(/[^\"]+)"\s+"([^\"]+)"', re.IGNORECASE)
 _DESCRIPTOR_RE = re.compile(r'^\s*ManagedApplicationDescriptor\s+"([^"]+)"', re.IGNORECASE)
+_SSO_MARK_RE = re.compile(r'^#\s*1c\s+sso\s+(?P<wsdir>\S+)', re.IGNORECASE)
+
+
+def _read_apache_conf() -> str:
+    try:
+        with open(APACHE_CONF, "r", encoding="utf-8") as f:
+            return f.read()
+    except FileNotFoundError:
+        logger.warning("Apache config not found: %s", APACHE_CONF)
+        return ""
+    except Exception as exc:  # pragma: no cover - defensive
+        logger.error("Failed to read Apache config: %s", exc)
+        return ""
+
+
+def _write_apache_conf(content: str) -> None:
+    with open(APACHE_CONF, "w", encoding="utf-8") as f:
+        f.write(content)
 
 
 def _run_command(args: List[str]) -> subprocess.CompletedProcess:
@@ -41,18 +64,22 @@ def _run_command(args: List[str]) -> subprocess.CompletedProcess:
     return subprocess.run(args, capture_output=True, text=True, check=False)
 
 
+def _is_sso_block_present(wsdir: str, conf_text: str) -> bool:
+    if not conf_text:
+        return False
+    mark = re.compile(rf"#\s*1c\s+sso\s+{re.escape(wsdir)}", re.IGNORECASE)
+    if mark.search(conf_text):
+        return True
+    location = re.compile(rf"<LocationMatch[^>]*{re.escape(wsdir)}[^>]*>", re.IGNORECASE)
+    return bool(location.search(conf_text))
+
+
 def _parse_apache_conf() -> List[WebPublication]:
     publications: List[WebPublication] = []
-    if not os.path.exists(APACHE_CONF):
-        logger.warning("Apache config not found: %s", APACHE_CONF)
+    conf_text = _read_apache_conf()
+    if not conf_text:
         return publications
-
-    try:
-        with open(APACHE_CONF, "r", encoding="utf-8") as f:
-            lines = f.readlines()
-    except Exception as exc:  # pragma: no cover - defensive
-        logger.error("Failed to read Apache config: %s", exc)
-        return publications
+    lines = conf_text.splitlines()
 
     idx = 0
     while idx < len(lines):
@@ -94,6 +121,7 @@ def _parse_apache_conf() -> List[WebPublication]:
                 url=f"/{wsdir}",
                 descriptor_path=descriptor_effective,
                 conn_str=conn_str,
+                sso_enabled=_is_sso_block_present(wsdir, conf_text),
             )
         )
     return publications
@@ -160,6 +188,7 @@ def publish_infobase(name: str, conn_str: str, uuid: Optional[str] = None) -> We
         url=f"/{name}",
         descriptor_path=descriptor_target,
         conn_str=conn_str,
+        sso_enabled=_is_sso_block_present(name, _read_apache_conf()),
     )
 
 
@@ -208,3 +237,40 @@ def delete_publication(name: str) -> None:
         raise RuntimeError(reload_cp.stderr.strip() or "Не удалось перезагрузить Apache2")
 
     # We keep publication directory intact by default; adjust if cleanup is desired.
+
+
+def enable_sso(name: str) -> None:
+    """Enable Kerberos SSO block for a specific wsdir (infobase name)."""
+
+    conf_text = _read_apache_conf()
+    if _is_sso_block_present(name, conf_text):
+        logger.info("SSO already enabled for %s", name)
+        return
+
+    snippet = SSO_SNIPPET_TEMPLATE.format(wsdir=name)
+    new_conf = conf_text.rstrip() + "\n\n" + snippet + "\n"
+
+    _write_apache_conf(new_conf)
+    reload_cp = _run_command(["systemctl", "reload", "apache2"])
+    if reload_cp.returncode != 0:
+        logger.error("Apache reload failed after enabling SSO: %s", reload_cp.stderr.strip())
+        raise RuntimeError(reload_cp.stderr.strip() or "Не удалось перезагрузить Apache2 после включения SSO")
+
+
+def disable_sso(name: str) -> None:
+    """Remove Kerberos SSO block for a specific wsdir if present."""
+
+    conf_text = _read_apache_conf()
+    mark = SSO_MARK_TEMPLATE.format(wsdir=name)
+    pattern = re.compile(rf"{re.escape(mark)}.*?</LocationMatch>\s*", re.IGNORECASE | re.DOTALL)
+    new_conf, count = pattern.subn("", conf_text)
+
+    if count == 0:
+        logger.info("SSO block not found for %s; nothing to remove", name)
+        return
+
+    _write_apache_conf(new_conf)
+    reload_cp = _run_command(["systemctl", "reload", "apache2"])
+    if reload_cp.returncode != 0:
+        logger.error("Apache reload failed after disabling SSO: %s", reload_cp.stderr.strip())
+        raise RuntimeError(reload_cp.stderr.strip() or "Не удалось перезагрузить Apache2 после отключения SSO")
