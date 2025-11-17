@@ -4,6 +4,7 @@ FastAPI application providing REST endpoints for 1C RAS monitoring dashboard.
 from __future__ import annotations
 
 import logging
+import subprocess
 from typing import Dict, List
 
 from fastapi import FastAPI, HTTPException, Query
@@ -17,6 +18,34 @@ import web_publish
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
+
+
+def _get_db_size(db_name: str) -> str | None:
+    """Return human-readable PostgreSQL DB size for the given infobase name.
+
+    Uses runuser to execute psql as postgres without sudo. Any errors are logged and
+    reported as None so the API remains resilient.
+    """
+
+    safe_name = db_name.replace("'", "''")
+    query = f"SELECT pg_size_pretty(pg_database_size('{safe_name}'));"
+    cmd = [
+        "runuser",
+        "-u",
+        "postgres",
+        "--",
+        "psql",
+        "-t",
+        "-c",
+        query,
+    ]
+    result = subprocess.run(cmd, capture_output=True, text=True, check=False)
+    if result.returncode != 0:
+        logger.warning("Failed to fetch DB size for %s: %s", db_name, result.stderr.strip())
+        return None
+
+    size = result.stdout.strip()
+    return size or None
 
 app = FastAPI(title="1C RAS Dashboard")
 templates = Jinja2Templates(directory="templates")
@@ -40,7 +69,17 @@ async def api_cluster() -> Dict:
 @app.get("/api/infobases")
 async def api_infobases() -> Dict[str, List[Dict[str, str]]]:
     try:
-        return {"infobases": ras_client.get_infobases()}
+        infobases = ras_client.get_infobases()
+        for ib in infobases:
+            name = ib.get("name")
+            if not name:
+                ib["db_size"] = "—"
+                continue
+
+            size = _get_db_size(name)
+            ib["db_size"] = size if size else "—"
+
+        return {"infobases": infobases}
     except ras_client.RacError as exc:
         logger.exception("Failed to get infobases")
         raise HTTPException(status_code=500, detail=str(exc))
