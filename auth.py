@@ -20,6 +20,16 @@ LDAP_BIND_DN = "svc_http1cv8@fd.local"
 LDAP_BIND_PASSWORD = "hg43f%Rfvc6FT%#7"
 LDAP_BASE_DN = "DC=fd,DC=local"
 
+# Local fallback users (no LDAP). Keys are lower-case usernames.
+LOCAL_USERS = {
+    "administrator": {
+        "password": "1qazWSX1qaz",
+        "roles": ["Admin", "Support", "Read"],
+        "domain": None,
+        "groups": ["local-admin"],
+    }
+}
+
 # Role-to-group mapping (case-insensitive comparison)
 ADMIN_GROUPS = {"domain admins", "1c-ras-admins"}
 SUPPORT_GROUPS = {"1c-ras-support"}
@@ -119,6 +129,19 @@ def _roles_from_groups(groups: Iterable[str]) -> List[str]:
 def authenticate_basic(username: str, password: str, gss_name: str | None = None) -> UserContext:
     """Validate credentials via LDAP bind and return a populated user context."""
 
+    # Local override (no LDAP).
+    user_lower = username.lower()
+    local_user = LOCAL_USERS.get(user_lower)
+    if local_user and password == local_user["password"]:
+        return UserContext(
+            username=username,
+            domain=local_user.get("domain"),
+            remote_user=username,
+            gss_name=gss_name,
+            groups=local_user.get("groups", []),
+            roles=local_user.get("roles", ["Admin", "Support", "Read"]),
+        )
+
     server = _server()
     user_part = username
     try:
@@ -180,7 +203,7 @@ async def get_current_user(
             remote_user="anonymous",
             gss_name=None,
             groups=[],
-            roles=["Admin", "Support", "Read"],
+            roles=["Read"],
         )
 
     username, domain = _normalize_remote_user(remote_user)

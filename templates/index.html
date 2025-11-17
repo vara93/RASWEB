@@ -516,7 +516,7 @@
             currentUser = await fetchJSON('/auth/me');
         } catch (err) {
             console.error('Не удалось получить данные пользователя', err);
-            currentUser = { user: 'anonymous', roles: ['Admin', 'Support', 'Read'] };
+            currentUser = { user: 'anonymous', roles: ['Read'] };
         }
         updateUserBadge();
     }
