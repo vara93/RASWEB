@@ -21,7 +21,9 @@ from auth import (
     UserContext,
     authenticate_basic,
     get_current_user,
+    get_ldap_config,
     ldap_status,
+    update_ldap_config,
     require_roles,
     get_group_config,
     update_group_config,
@@ -123,6 +125,14 @@ class GroupUpdate(BaseModel):
     users: List[str] | None = None
 
 
+class LdapConfigUpdate(BaseModel):
+    server: str
+    port: int = 389
+    bind_dn: str
+    base_dn: str
+    password: str | None = None
+
+
 @app.get("/auth/groups")
 async def auth_groups(
     user: UserContext = Depends(require_roles("Admin")),
@@ -138,6 +148,30 @@ async def auth_groups_update(
     user: UserContext = Depends(require_roles("Admin")),
 ) -> Dict[str, object]:
     cfg = update_group_config(payload.role, payload.groups, payload.users)
+    return {"success": True, "config": cfg}
+
+
+@app.get("/auth/ldap/config")
+async def auth_ldap_config(
+    user: UserContext = Depends(require_roles("Admin")),
+) -> Dict[str, object]:
+    """Return LDAP connection settings without exposing the password."""
+
+    return get_ldap_config()
+
+
+@app.post("/auth/ldap/config")
+async def auth_ldap_config_update(
+    payload: LdapConfigUpdate,
+    user: UserContext = Depends(require_roles("Admin")),
+) -> Dict[str, object]:
+    cfg = update_ldap_config(
+        payload.server,
+        payload.port,
+        payload.bind_dn,
+        payload.base_dn,
+        payload.password,
+    )
     return {"success": True, "config": cfg}
 
 

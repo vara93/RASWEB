@@ -16,17 +16,9 @@ from ldap3 import ALL, Connection, Server
 
 logger = logging.getLogger(__name__)
 
-# AD / LDAP configuration
-LDAP_SERVER = "fd.local"
-LDAP_PORT = 389
-LDAP_BIND_DN = "svc_http1cv8@fd.local"
-LDAP_BIND_PASSWORD = "hg43f%Rfvc6FT%#7"
-LDAP_BASE_DN = "DC=fd,DC=local"
-LDAP_DEFAULT_DOMAIN = LDAP_BASE_DN.replace("DC=", "").replace(",", ".")
-LDAP_NETBIOS_DOMAIN = LDAP_DEFAULT_DOMAIN.split(".")[0].upper()
-
 BASE_DIR = Path(__file__).resolve().parent
 GROUP_CONFIG_PATH = BASE_DIR / "auth_groups.json"
+LDAP_CONFIG_PATH = BASE_DIR / "ldap_config.json"
 
 # Local fallback users (no LDAP). Keys are lower-case usernames.
 LOCAL_USERS = {
@@ -42,6 +34,103 @@ LOCAL_USERS = {
 ADMIN_GROUPS = {"domain admins", "1c-ras-admins"}
 SUPPORT_GROUPS = {"1c-ras-support"}
 READ_GROUPS = {"1c-ras-readonly"}
+
+
+def _default_ldap_config() -> dict:
+    return {
+        "server": "fd.local",
+        "port": 389,
+        "bind_dn": "",
+        "base_dn": "DC=fd,DC=local",
+        "password_b64": None,
+    }
+
+
+def _load_ldap_config() -> dict:
+    config = _default_ldap_config()
+    if not LDAP_CONFIG_PATH.exists():
+        return config
+
+    try:
+        with LDAP_CONFIG_PATH.open("r", encoding="utf-8") as fh:
+            stored = json.load(fh)
+        config["server"] = stored.get("server", config["server"]) or ""
+        config["port"] = int(stored.get("port", config["port"]))
+        config["bind_dn"] = stored.get("bind_dn", "") or ""
+        config["base_dn"] = stored.get("base_dn", config["base_dn"]) or ""
+        password_b64 = stored.get("password_b64")
+        if password_b64:
+            config["password_b64"] = password_b64
+    except Exception as exc:  # pragma: no cover - defensive
+        logger.error("Failed to load ldap config: %s", exc)
+    return config
+
+
+def _save_ldap_config(server: str, port: int, bind_dn: str, base_dn: str, password: str | None):
+    data = {
+        "server": server,
+        "port": port,
+        "bind_dn": bind_dn,
+        "base_dn": base_dn,
+    }
+    if password:
+        data["password_b64"] = base64.b64encode(password.encode("utf-8")).decode("utf-8")
+    else:
+        existing = _load_ldap_config()
+        if existing.get("password_b64"):
+            data["password_b64"] = existing["password_b64"]
+
+    LDAP_CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
+    with LDAP_CONFIG_PATH.open("w", encoding="utf-8") as fh:
+        json.dump(data, fh, ensure_ascii=False, indent=2)
+
+    _server.cache_clear()
+
+
+def get_ldap_config() -> dict:
+    cfg = _load_ldap_config()
+    return {
+        "server": cfg.get("server", ""),
+        "port": cfg.get("port", 389),
+        "bind_dn": cfg.get("bind_dn", ""),
+        "base_dn": cfg.get("base_dn", ""),
+        "password_set": bool(cfg.get("password_b64")),
+    }
+
+
+def update_ldap_config(server: str, port: int, bind_dn: str, base_dn: str, password: str | None) -> dict:
+    if not server:
+        raise HTTPException(status_code=400, detail="Сервер LDAP обязателен")
+    if not base_dn:
+        raise HTTPException(status_code=400, detail="Base DN обязателен")
+    if not bind_dn:
+        raise HTTPException(status_code=400, detail="Учетная запись обязателена")
+    _save_ldap_config(server, port, bind_dn, base_dn, password)
+    return get_ldap_config()
+
+
+def _ldap_settings() -> dict:
+    cfg = _load_ldap_config()
+    base_dn = cfg.get("base_dn", "")
+    default_domain = base_dn.replace("DC=", "").replace(",", ".") if base_dn else None
+    netbios = default_domain.split(".")[0].upper() if default_domain else None
+    password = None
+    pwd_b64 = cfg.get("password_b64")
+    if pwd_b64:
+        try:
+            password = base64.b64decode(pwd_b64).decode("utf-8")
+        except Exception as exc:  # pragma: no cover - defensive
+            logger.error("Failed to decode LDAP password: %s", exc)
+
+    return {
+        "server": cfg.get("server", ""),
+        "port": int(cfg.get("port", 389)),
+        "bind_dn": cfg.get("bind_dn", ""),
+        "password": password,
+        "base_dn": base_dn,
+        "default_domain": default_domain,
+        "netbios_domain": netbios,
+    }
 
 
 def _default_custom() -> dict:
@@ -161,44 +250,57 @@ def _normalize_remote_user(remote_user: str) -> tuple[str, str | None]:
     return remote_user, None
 
 
-def _bind_candidates(username: str, domain: str | None) -> List[str]:
+def _bind_candidates(
+    username: str, domain: str | None, default_domain: str | None, netbios_domain: str | None
+) -> List[str]:
     """Return possible LDAP principals for binding the user."""
 
-    # If the caller already provided a principal with domain, try it first.
     if "@" in username or "\\" in username:
         return [username]
 
-    candidates = [f"{username}@{LDAP_DEFAULT_DOMAIN}"]
-    netbios = (
-        (domain or LDAP_DEFAULT_DOMAIN).split(".")[0].upper()
-        if domain
-        else LDAP_NETBIOS_DOMAIN
-    )
-    candidates.append(f"{netbios}\\{username}")
+    candidates: list[str] = []
+    if default_domain:
+        candidates.append(f"{username}@{default_domain}")
+    if domain:
+        candidates.append(f"{username}@{domain}")
+    if netbios_domain:
+        candidates.append(f"{netbios_domain}\\{username}")
 
     seen: Set[str] = set()
     unique: List[str] = []
     for cand in candidates:
-        if cand not in seen:
+        if cand and cand not in seen:
             unique.append(cand)
             seen.add(cand)
-    return unique
+    return unique or [username]
 
 
 @lru_cache(maxsize=1)
-def _server() -> Server:
-    return Server(LDAP_SERVER, port=LDAP_PORT, get_info=ALL)
+def _server(server: str, port: int) -> Server:
+    return Server(server, port=port, get_info=ALL)
 
 
-def _fetch_groups(username: str, upn: str | None = None) -> List[str]:
+def _get_server(cfg: dict) -> Server:
+    if not cfg.get("server"):
+        raise HTTPException(status_code=503, detail="LDAP сервер не настроен")
+    return _server(cfg["server"], cfg.get("port", 389))
+
+
+def _fetch_groups(username: str, upn: str | None = None, cfg: dict | None = None) -> List[str]:
     """Fetch AD groups (CN) for the given user via LDAP bind using service account."""
 
-    server = _server()
+    cfg = cfg or _ldap_settings()
+    if not cfg.get("bind_dn") or not cfg.get("password"):
+        raise HTTPException(status_code=503, detail="Сервисная учетная запись LDAP не настроена")
+    if not cfg.get("base_dn"):
+        raise HTTPException(status_code=503, detail="Base DN LDAP не настроен")
+
+    server = _get_server(cfg)
     try:
         conn = Connection(
             server,
-            user=LDAP_BIND_DN,
-            password=LDAP_BIND_PASSWORD,
+            user=cfg["bind_dn"],
+            password=cfg["password"],
             auto_bind=True,
             receive_timeout=10,
         )
@@ -213,7 +315,7 @@ def _fetch_groups(username: str, upn: str | None = None) -> List[str]:
 
     try:
         conn.search(
-            search_base=LDAP_BASE_DN,
+            search_base=cfg["base_dn"],
             search_filter=search_filter,
             attributes=["memberOf", "sAMAccountName", "userPrincipalName"],
         )
@@ -240,23 +342,37 @@ def _fetch_groups(username: str, upn: str | None = None) -> List[str]:
 def ldap_status(probe_user: str | None = None) -> dict:
     """Perform a lightweight LDAP bind + optional user lookup to validate connectivity."""
 
-    server = _server()
+    cfg = _ldap_settings()
     result: dict[str, object] = {
         "reachable": False,
-        "base_dn": LDAP_BASE_DN,
-        "default_domain": LDAP_DEFAULT_DOMAIN,
-        "netbios_domain": LDAP_NETBIOS_DOMAIN,
+        "base_dn": cfg.get("base_dn"),
+        "default_domain": cfg.get("default_domain"),
+        "netbios_domain": cfg.get("netbios_domain"),
         "probe_user": probe_user,
         "entries": 0,
         "user_found": None,
         "message": "",
     }
 
+    if not cfg.get("bind_dn") or not cfg.get("password"):
+        result["message"] = "Сервисная учетная запись LDAP не задана"
+        return result
+
+    try:
+        server = _get_server(cfg)
+    except HTTPException as exc:
+        result["message"] = exc.detail
+        return result
+
+    if not cfg.get("base_dn"):
+        result["message"] = "Base DN LDAP не настроен"
+        return result
+
     try:
         conn = Connection(
             server,
-            user=LDAP_BIND_DN,
-            password=LDAP_BIND_PASSWORD,
+            user=cfg["bind_dn"],
+            password=cfg["password"],
             auto_bind=True,
             receive_timeout=10,
         )
@@ -280,7 +396,7 @@ def ldap_status(probe_user: str | None = None) -> dict:
 
     try:
         conn.search(
-            search_base=LDAP_BASE_DN,
+            search_base=cfg["base_dn"],
             search_filter=search_filter,
             attributes=["sAMAccountName", "userPrincipalName"],
         )
@@ -352,10 +468,11 @@ def authenticate_basic(username: str, password: str, gss_name: str | None = None
             roles=local_user.get("roles", ["Admin", "Support", "Read"]),
         )
 
-    server = _server()
+    cfg = _ldap_settings()
+    server = _get_server(cfg)
     user_part = username
     norm_user, domain = _normalize_remote_user(user_part)
-    candidates = _bind_candidates(norm_user, domain)
+    candidates = _bind_candidates(norm_user, domain, cfg.get("default_domain"), cfg.get("netbios_domain"))
     logger.info(
         "Authenticating via LDAP bind: user=%s, gss_name=%s, principals=%s",
         norm_user,
@@ -389,7 +506,7 @@ def authenticate_basic(username: str, password: str, gss_name: str | None = None
         )
         raise HTTPException(status_code=401, detail="Неверный логин или пароль")
 
-    upn = f"{norm_user}@{domain or LDAP_DEFAULT_DOMAIN}"
+    upn = f"{norm_user}@{domain or cfg.get('default_domain', '')}" if cfg.get("default_domain") or domain else norm_user
     logger.info(
         "LDAP bind succeeded for %s; principal=%s, domain=%s, upn=%s",
         norm_user,
@@ -397,7 +514,7 @@ def authenticate_basic(username: str, password: str, gss_name: str | None = None
         domain or "<none>",
         upn,
     )
-    groups = _fetch_groups(norm_user, upn)
+    groups = _fetch_groups(norm_user, upn, cfg)
     roles = _roles_from_members(norm_user, groups)
     if not roles:
         logger.warning("User %s has no allowed roles; groups=%s", norm_user, groups)
@@ -454,9 +571,12 @@ async def get_current_user(
         gss_name or "<none>",
         domain or "<none>",
     )
-    upn = f"{username}@{domain}" if domain else f"{username}@{LDAP_DEFAULT_DOMAIN}"
+    cfg = _ldap_settings()
+    upn = f"{username}@{domain}" if domain else (
+        f"{username}@{cfg.get('default_domain')}" if cfg.get("default_domain") else username
+    )
 
-    groups = _fetch_groups(username, upn)
+    groups = _fetch_groups(username, upn, cfg)
     roles = _roles_from_members(username, groups)
 
     if not roles:

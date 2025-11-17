@@ -1,0 +1,7 @@
+{
+  "server": "",
+  "port": 389,
+  "bind_dn": "",
+  "base_dn": "",
+  "password_b64": null
+}
