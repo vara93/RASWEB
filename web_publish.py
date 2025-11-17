@@ -247,10 +247,29 @@ def enable_sso(name: str) -> None:
         logger.info("SSO already enabled for %s", name)
         return
 
-    snippet = SSO_SNIPPET_TEMPLATE.format(wsdir=name)
-    new_conf = conf_text.rstrip() + "\n\n" + snippet + "\n"
+    lines = conf_text.splitlines()
+    insert_idx = len(lines)
+    idx = 0
 
-    _write_apache_conf(new_conf)
+    while idx < len(lines):
+        if lines[idx].strip().startswith("# 1c publication"):
+            block_start = idx
+            block_end = idx + 1
+            while block_end < len(lines) and not lines[block_end].strip().startswith("# 1c publication"):
+                block_end += 1
+
+            block_text = "\n".join(lines[block_start:block_end])
+            if re.search(rf"Alias\s+\"/{re.escape(name)}\"", block_text, re.IGNORECASE):
+                insert_idx = block_end
+                break
+            idx = block_end
+        else:
+            idx += 1
+
+    snippet_lines = SSO_SNIPPET_TEMPLATE.format(wsdir=name).strip("\n").splitlines()
+    new_lines = lines[:insert_idx] + [""] + snippet_lines + [""] + lines[insert_idx:]
+
+    _write_apache_conf("\n".join(new_lines))
     reload_cp = _run_command(["systemctl", "reload", "apache2"])
     if reload_cp.returncode != 0:
         logger.error("Apache reload failed after enabling SSO: %s", reload_cp.stderr.strip())

@@ -281,7 +281,8 @@
                                         <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Директория</th>
                                         <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">SSO</th>
                                         <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">UUID</th>
-                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Действия</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Публикация</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">SSO действие</th>
                                     </tr>
                                 </thead>
                                 <tbody id="webpub-body" class="divide-y divide-slate-100 bg-white"></tbody>
@@ -517,9 +518,7 @@
         const body = document.getElementById('webpub-body');
         if (!body) return;
         body.innerHTML = (pubs || []).map(pub => {
-            const ssoBadge = pub.sso_enabled
-                ? '<span class="px-2 py-1 text-xs rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100">Вкл</span>'
-                : '<span class="px-2 py-1 text-xs rounded-lg bg-slate-100 text-slate-600 border border-slate-200">Выкл</span>';
+            const ssoIndicator = `<div class=\"inline-flex items-center gap-2\"><span class=\"h-2.5 w-2.5 rounded-full ${pub.sso_enabled ? 'bg-emerald-500 shadow-[0_0_0_3px] shadow-emerald-100' : 'bg-slate-300 shadow-[0_0_0_3px] shadow-slate-100'}\"></span><span class=\"text-xs text-slate-600\">SSO</span></div>`;
             const ssoActionLabel = pub.sso_enabled ? 'Отключить SSO' : 'Включить SSO';
             const ssoActionClass = pub.sso_enabled
                 ? 'bg-white text-slate-800 border border-slate-200 hover:bg-slate-50'
@@ -530,13 +529,13 @@
                 `<td class=\"px-4 py-3 text-sm text-slate-800 font-medium\">${pub.infobase_name || pub.wsdir}</td>`+
                 `<td class=\"px-4 py-3 text-sm text-slate-700\">${pub.url}</td>`+
                 `<td class=\"px-4 py-3 text-sm text-slate-700\">${pub.dir}</td>`+
-                `<td class=\"px-4 py-3 text-sm text-slate-700\">${ssoBadge}</td>`+
+                `<td class=\"px-4 py-3 text-sm text-slate-700\">${ssoIndicator}</td>`+
                 `<td class=\"px-4 py-3 text-sm text-slate-700\">${pub.infobase_uuid ?? '—'}</td>`+
                 `<td class=\"px-4 py-3 text-sm\">`+
-                    `<div class=\"flex flex-wrap gap-2\">`+
-                        `<button class=\"sso-web-btn inline-flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all text-sm ${ssoActionClass}\" data-name=\"${pub.wsdir}\" ${ssoActionAttr}>${ssoActionLabel}</button>`+
-                        `<button class=\"delete-web-btn inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition-all text-sm\" data-name=\"${pub.wsdir}\">Удалить</button>`+
-                    `</div>`+
+                    `<button class=\"delete-web-btn inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition-all text-sm\" data-name=\"${pub.wsdir}\">Удалить</button>`+
+                `</td>`+
+                `<td class=\"px-4 py-3 text-sm\">`+
+                    `<button class=\"sso-web-btn inline-flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all text-sm ${ssoActionClass}\" data-name=\"${pub.wsdir}\" ${ssoActionAttr}>${ssoActionLabel}</button>`+
                 `</td>`+
                 `</tr>`;
         }).join('');
