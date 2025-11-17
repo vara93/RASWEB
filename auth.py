@@ -6,7 +6,10 @@ import logging
 import re
 from dataclasses import dataclass
 from functools import lru_cache
+from pathlib import Path
 from typing import Iterable, List, Set
+
+import json
 
 from fastapi import Depends, Header, HTTPException, Request
 from ldap3 import ALL, Connection, Server
@@ -19,6 +22,9 @@ LDAP_PORT = 389
 LDAP_BIND_DN = "svc_http1cv8@fd.local"
 LDAP_BIND_PASSWORD = "hg43f%Rfvc6FT%#7"
 LDAP_BASE_DN = "DC=fd,DC=local"
+
+BASE_DIR = Path(__file__).resolve().parent
+GROUP_CONFIG_PATH = BASE_DIR / "auth_groups.json"
 
 # Local fallback users (no LDAP). Keys are lower-case usernames.
 LOCAL_USERS = {
@@ -34,6 +40,66 @@ LOCAL_USERS = {
 ADMIN_GROUPS = {"domain admins", "1c-ras-admins"}
 SUPPORT_GROUPS = {"1c-ras-support"}
 READ_GROUPS = {"1c-ras-readonly"}
+
+
+def _load_custom_groups() -> dict:
+    """Load mutable group configuration from disk (lower-cased)."""
+
+    default = {"Admin": [], "Support": [], "Read": []}
+    if not GROUP_CONFIG_PATH.exists():
+        return default
+    try:
+        with GROUP_CONFIG_PATH.open("r", encoding="utf-8") as fh:
+            data = json.load(fh)
+            return {
+                "Admin": [g.lower() for g in data.get("Admin", [])],
+                "Support": [g.lower() for g in data.get("Support", [])],
+                "Read": [g.lower() for g in data.get("Read", [])],
+            }
+    except Exception as exc:  # pragma: no cover - defensive
+        logger.error("Failed to load auth group config: %s", exc)
+        return default
+
+
+def _save_custom_groups(config: dict) -> None:
+    """Persist custom groups configuration to disk."""
+
+    GROUP_CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
+    with GROUP_CONFIG_PATH.open("w", encoding="utf-8") as fh:
+        json.dump(config, fh, ensure_ascii=False, indent=2)
+
+
+def get_group_config() -> dict:
+    """Return current group configuration (builtin, custom, effective)."""
+
+    custom = _load_custom_groups()
+    effective = {
+        "Admin": sorted({*ADMIN_GROUPS, *custom.get("Admin", [])}),
+        "Support": sorted({*SUPPORT_GROUPS, *custom.get("Support", [])}),
+        "Read": sorted({*READ_GROUPS, *custom.get("Read", [])}),
+    }
+    return {
+        "builtin": {
+            "Admin": sorted(ADMIN_GROUPS),
+            "Support": sorted(SUPPORT_GROUPS),
+            "Read": sorted(READ_GROUPS),
+        },
+        "custom": custom,
+        "effective": effective,
+    }
+
+
+def update_group_config(role: str, groups: list[str]) -> dict:
+    """Update custom groups for a given role and persist."""
+
+    role_key = role.capitalize()
+    if role_key not in {"Admin", "Support", "Read"}:
+        raise HTTPException(status_code=400, detail="Неизвестная роль")
+
+    custom = _load_custom_groups()
+    custom[role_key] = [g.lower() for g in groups if g]
+    _save_custom_groups(custom)
+    return get_group_config()
 
 
 @dataclass
@@ -109,16 +175,23 @@ def _fetch_groups(username: str, upn: str | None = None) -> List[str]:
     return groups
 
 
+def _effective_role_sets() -> dict:
+    cfg = _load_custom_groups()
+    return {
+        "Admin": {"domain admins", "1c-ras-admins", *cfg.get("Admin", [])},
+        "Support": {"1c-ras-support", *cfg.get("Support", [])},
+        "Read": {"1c-ras-readonly", *cfg.get("Read", [])},
+    }
+
+
 def _roles_from_groups(groups: Iterable[str]) -> List[str]:
     group_set: Set[str] = {g.lower() for g in groups}
     roles: Set[str] = set()
+    effective = _effective_role_sets()
 
-    if ADMIN_GROUPS & group_set:
-        roles.add("Admin")
-    if SUPPORT_GROUPS & group_set:
-        roles.add("Support")
-    if READ_GROUPS & group_set:
-        roles.add("Read")
+    for role, mapped in effective.items():
+        if mapped & group_set:
+            roles.add(role)
 
     if "domain admins" in group_set:
         roles.add("Admin")

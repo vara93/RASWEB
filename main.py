@@ -7,6 +7,8 @@ import logging
 import subprocess
 from typing import Dict, List
 
+from pydantic import BaseModel
+
 from fastapi import Depends, FastAPI, HTTPException, Query, Body
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -15,7 +17,14 @@ from fastapi import Request
 import ras_client
 import monitoring
 import web_publish
-from auth import UserContext, authenticate_basic, get_current_user, require_roles
+from auth import (
+    UserContext,
+    authenticate_basic,
+    get_current_user,
+    require_roles,
+    get_group_config,
+    update_group_config,
+)
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -105,6 +114,29 @@ async def auth_login(
             "roles": user_ctx.roles,
         },
     }
+
+
+class GroupUpdate(BaseModel):
+    role: str
+    groups: List[str]
+
+
+@app.get("/auth/groups")
+async def auth_groups(
+    user: UserContext = Depends(require_roles("Admin")),
+) -> Dict[str, object]:
+    """Return builtin/custom/effective group mappings."""
+
+    return get_group_config()
+
+
+@app.post("/auth/groups")
+async def auth_groups_update(
+    payload: GroupUpdate,
+    user: UserContext = Depends(require_roles("Admin")),
+) -> Dict[str, object]:
+    cfg = update_group_config(payload.role, payload.groups)
+    return {"success": True, "config": cfg}
 
 
 @app.get("/api/cluster")
