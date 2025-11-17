@@ -22,6 +22,8 @@ LDAP_PORT = 389
 LDAP_BIND_DN = "svc_http1cv8@fd.local"
 LDAP_BIND_PASSWORD = "hg43f%Rfvc6FT%#7"
 LDAP_BASE_DN = "DC=fd,DC=local"
+LDAP_DEFAULT_DOMAIN = LDAP_BASE_DN.replace("DC=", "").replace(",", ".")
+LDAP_NETBIOS_DOMAIN = LDAP_DEFAULT_DOMAIN.split(".")[0].upper()
 
 BASE_DIR = Path(__file__).resolve().parent
 GROUP_CONFIG_PATH = BASE_DIR / "auth_groups.json"
@@ -126,6 +128,30 @@ def _normalize_remote_user(remote_user: str) -> tuple[str, str | None]:
     return remote_user, None
 
 
+def _bind_candidates(username: str, domain: str | None) -> List[str]:
+    """Return possible LDAP principals for binding the user."""
+
+    # If the caller already provided a principal with domain, try it first.
+    if "@" in username or "\\" in username:
+        return [username]
+
+    candidates = [f"{username}@{LDAP_DEFAULT_DOMAIN}"]
+    netbios = (
+        (domain or LDAP_DEFAULT_DOMAIN).split(".")[0].upper()
+        if domain
+        else LDAP_NETBIOS_DOMAIN
+    )
+    candidates.append(f"{netbios}\\{username}")
+
+    seen: Set[str] = set()
+    unique: List[str] = []
+    for cand in candidates:
+        if cand not in seen:
+            unique.append(cand)
+            seen.add(cand)
+    return unique
+
+
 @lru_cache(maxsize=1)
 def _server() -> Server:
     return Server(LDAP_SERVER, port=LDAP_PORT, get_info=ALL)
@@ -220,28 +246,46 @@ def authenticate_basic(username: str, password: str, gss_name: str | None = None
 
     server = _server()
     user_part = username
+    norm_user, domain = _normalize_remote_user(user_part)
+    candidates = _bind_candidates(norm_user, domain)
     logger.info(
-        "Authenticating via LDAP bind: user=%s, gss_name=%s",
-        user_part,
+        "Authenticating via LDAP bind: user=%s, gss_name=%s, principals=%s",
+        norm_user,
         gss_name or "<none>",
+        candidates,
     )
-    try:
-        Connection(
-            server,
-            user=user_part,
-            password=password,
-            auto_bind=True,
-            receive_timeout=10,
-        ).unbind()
-    except Exception as exc:  # pragma: no cover - network/auth issues
-        logger.warning("User basic auth failed for %s: %s", user_part, exc)
+
+    last_exc: Exception | None = None
+    bound_principal: str | None = None
+    for principal in candidates:
+        try:
+            Connection(
+                server,
+                user=principal,
+                password=password,
+                auto_bind=True,
+                receive_timeout=10,
+            ).unbind()
+            bound_principal = principal
+            break
+        except Exception as exc:  # pragma: no cover - network/auth issues
+            last_exc = exc
+            logger.warning("LDAP bind failed for %s using %s: %s", norm_user, principal, exc)
+
+    if not bound_principal:
+        logger.warning(
+            "User basic auth failed for %s after %d attempts: %s",
+            norm_user,
+            len(candidates),
+            last_exc,
+        )
         raise HTTPException(status_code=401, detail="Неверный логин или пароль")
 
-    norm_user, domain = _normalize_remote_user(user_part)
-    upn = f"{norm_user}@{domain}" if domain else f"{norm_user}@fd.local"
+    upn = f"{norm_user}@{domain or LDAP_DEFAULT_DOMAIN}"
     logger.info(
-        "LDAP bind succeeded for %s; resolved domain=%s, upn=%s",
+        "LDAP bind succeeded for %s; principal=%s, domain=%s, upn=%s",
         norm_user,
+        bound_principal,
         domain or "<none>",
         upn,
     )
@@ -302,7 +346,7 @@ async def get_current_user(
         gss_name or "<none>",
         domain or "<none>",
     )
-    upn = f"{username}@{domain}" if domain else f"{username}@fd.local"
+    upn = f"{username}@{domain}" if domain else f"{username}@{LDAP_DEFAULT_DOMAIN}"
 
     groups = _fetch_groups(username, upn)
     roles = _roles_from_groups(groups)
