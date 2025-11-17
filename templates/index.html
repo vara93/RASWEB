@@ -552,10 +552,12 @@
 
     async function loadCurrentUser() {
         let usedStored = false;
+        let storedUser = null;
         try {
             const stored = localStorage.getItem('rasCurrentUser');
             if (stored) {
-                currentUser = JSON.parse(stored);
+                storedUser = JSON.parse(stored);
+                currentUser = storedUser;
                 usedStored = true;
                 updateUserBadge();
             }
@@ -565,8 +567,14 @@
 
         try {
             const fetched = await fetchJSON('/auth/me');
-            currentUser = fetched;
-            localStorage.setItem('rasCurrentUser', JSON.stringify(fetched));
+            const looksAnonymous = fetched?.user === 'anonymous' ||
+                ((fetched?.roles || []).length === 1 && (fetched.roles || [])[0] === 'Read');
+            if (authToken && usedStored && storedUser && looksAnonymous) {
+                currentUser = storedUser;
+            } else {
+                currentUser = fetched;
+                localStorage.setItem('rasCurrentUser', JSON.stringify(fetched));
+            }
         } catch (err) {
             console.error('Не удалось получить данные пользователя', err);
             if (!usedStored) {
@@ -1027,7 +1035,6 @@
 
     async function publishInfobase(name, buttonEl) {
         if (!hasRole('Admin')) {
-            alert('Недостаточно прав для публикации');
             return;
         }
         await performWebOperation({
@@ -1054,7 +1061,6 @@
 
     async function deleteWebPublication(name, buttonEl) {
         if (!hasRole('Admin')) {
-            alert('Недостаточно прав для удаления');
             return;
         }
         await performWebOperation({
@@ -1081,7 +1087,6 @@
 
     async function toggleSso(name, enable, buttonEl) {
         if (!canSupport()) {
-            alert('Недостаточно прав для управления SSO');
             return;
         }
         await performWebOperation({
