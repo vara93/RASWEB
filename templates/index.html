@@ -451,6 +451,28 @@
     let webPublications = [];
     let webPublicationsMap = {};
     let currentInfobases = [];
+    let currentUser = { roles: [] };
+
+    function hasRole(role) {
+        return (currentUser.roles || []).includes(role);
+    }
+
+    function canSupport() {
+        return hasRole('Admin') || hasRole('Support');
+    }
+
+    function canRead() {
+        return hasRole('Admin') || hasRole('Support') || hasRole('Read');
+    }
+
+    async function loadCurrentUser() {
+        try {
+            currentUser = await fetchJSON('/auth/me');
+        } catch (err) {
+            console.error('Не удалось получить данные пользователя', err);
+            currentUser = { roles: [] };
+        }
+    }
 
     function renderTable(bodyId, rows, columns) {
         const body = document.getElementById(bodyId);
@@ -494,12 +516,15 @@
             const descr = row.descr || '';
             const dbSize = row.db_size || '—';
             const pub = webPublicationsMap[name];
+            const canPublish = hasRole('Admin');
             const ssoDot = pub?.sso_enabled
                 ? '<span class=\\"h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-[0_0_0_3px] shadow-emerald-100\\" title=\\"SSO включено\\"></span>'
                 : '';
             const webCell = pub
                 ? `<div class=\"flex items-center gap-2 flex-wrap\"><span class=\"px-3 py-1 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700 text-xs\">Опубликована</span>${ssoDot}</div>`
-                : `<button class=\"publish-btn inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-all text-sm\" data-name=\"${name}\">Публикация в Web</button>`;
+                : canPublish
+                    ? `<button class=\"publish-btn inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-all text-sm\" data-name=\"${name}\">Публикация в Web</button>`
+                    : '<span class="text-xs text-slate-400">Нет доступа</span>';
             return `<tr class=\"hover:bg-slate-50 transition-colors\">`+
                 `<td class=\"px-4 py-3 text-sm text-slate-800 font-medium\">${name}</td>`+
                 `<td class=\"px-4 py-3 text-sm text-slate-700\">${uuid}</td>`+
@@ -530,6 +555,14 @@
                 ? 'bg-red-50 text-red-600 border border-red-200 hover:bg-red-100'
                 : 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100';
             const ssoActionAttr = `data-action="${pub.sso_enabled ? 'disable' : 'enable'}"`;
+            const canDelete = hasRole('Admin');
+            const canToggle = canSupport();
+            const deleteBtn = canDelete
+                ? `<button class=\"delete-web-btn inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition-all text-sm\" data-name=\"${pub.wsdir}\">Удалить</button>`
+                : '<span class="text-xs text-slate-400">Недоступно</span>';
+            const ssoBtn = canToggle
+                ? `<button class=\"sso-web-btn inline-flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all text-sm ${ssoActionClass}\" data-name=\"${pub.wsdir}\" ${ssoActionAttr}>${ssoActionLabel}</button>`
+                : '<span class="text-xs text-slate-400">Недоступно</span>';
 
             return `<tr class=\"hover:bg-slate-50 transition-colors\">`+
                 `<td class=\"px-4 py-3 text-sm text-slate-800 font-medium\">${pub.infobase_name || pub.wsdir}</td>`+
@@ -537,12 +570,8 @@
                 `<td class=\"px-4 py-3 text-sm text-slate-700\">${pub.dir}</td>`+
                 `<td class=\"px-4 py-3 text-sm text-slate-700\">${ssoIndicator}</td>`+
                 `<td class=\"px-4 py-3 text-sm text-slate-700\">${pub.infobase_uuid ?? '—'}</td>`+
-                `<td class=\"px-4 py-3 text-sm\">`+
-                    `<button class=\"delete-web-btn inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition-all text-sm\" data-name=\"${pub.wsdir}\">Удалить</button>`+
-                `</td>`+
-                `<td class=\"px-4 py-3 text-sm\">`+
-                    `<button class=\"sso-web-btn inline-flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all text-sm ${ssoActionClass}\" data-name=\"${pub.wsdir}\" ${ssoActionAttr}>${ssoActionLabel}</button>`+
-                `</td>`+
+                `<td class=\"px-4 py-3 text-sm\">${deleteBtn}</td>`+
+                `<td class=\"px-4 py-3 text-sm\">${ssoBtn}</td>`+
                 `</tr>`;
         }).join('');
 
@@ -649,6 +678,10 @@
     const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
     async function restartService(service, buttonEl) {
+        if (!canSupport()) {
+            alert('Недостаточно прав для перезапуска');
+            return;
+        }
         openRestartModal(service);
         if (buttonEl) {
             buttonEl.disabled = true;
@@ -708,6 +741,13 @@
             const enabledBadge = svc.enabled
                 ? '<span class="px-2 py-1 text-xs rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100">Вкл</span>'
                 : '<span class="px-2 py-1 text-xs rounded-lg bg-slate-100 text-slate-600 border border-slate-200">Выкл</span>';
+            const canRestart = canSupport();
+            const restartBtn = canRestart
+                ? `<button class="restart-btn inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-900 text-white hover:bg-emerald-600 transition-all" data-unit="${svc.id}" data-display="${svc.display_name}">
+                        <svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-4 w-4\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M4.5 4.5v6h6m9-3a9 9 0 11-9-9\" /></svg>
+                        Перезапустить
+                    </button>`
+                : '<span class="text-xs text-slate-400">Недоступно</span>';
             return `<tr class="hover:bg-slate-50 transition-colors" data-unit="${svc.id}">
                 <td class="px-4 py-3 text-sm text-slate-800 font-medium">${svc.display_name}<div class="text-xs text-slate-500">${svc.id}</div></td>
                 <td class="px-4 py-3 text-sm text-slate-700">${svc.category}</td>
@@ -720,10 +760,7 @@
                             <svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-4 w-4\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M3.75 4.5h16.5M3.75 9h16.5M3.75 13.5h8.25m-8.25 4.5h8.25\"/></svg>
                             Лог
                         </button>
-                        <button class="restart-btn inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-900 text-white hover:bg-emerald-600 transition-all" data-unit="${svc.id}" data-display="${svc.display_name}">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 4.5v6h6m9-3a9 9 0 11-9-9" /></svg>
-                        Перезапустить
-                        </button>
+                        ${restartBtn}
                     </div>
                 </td>
             </tr>`;
@@ -775,6 +812,10 @@
     }
 
     async function publishInfobase(name, buttonEl) {
+        if (!hasRole('Admin')) {
+            alert('Недостаточно прав для публикации');
+            return;
+        }
         await performWebOperation({
             actionLabel: 'Публикация',
             name,
@@ -798,6 +839,10 @@
     }
 
     async function deleteWebPublication(name, buttonEl) {
+        if (!hasRole('Admin')) {
+            alert('Недостаточно прав для удаления');
+            return;
+        }
         await performWebOperation({
             actionLabel: 'Удаление публикации',
             name,
@@ -821,6 +866,10 @@
     }
 
     async function toggleSso(name, enable, buttonEl) {
+        if (!canSupport()) {
+            alert('Недостаточно прав для управления SSO');
+            return;
+        }
         await performWebOperation({
             actionLabel: enable ? 'Включение SSO' : 'Отключение SSO',
             name,
@@ -1079,11 +1128,16 @@
         });
     }
 
-    checkHealth();
-    loadData();
-    loadMonitoringSummary();
-    loadServices();
-    setInterval(loadMonitoringSummary, 20000);
+    async function initializeDashboard() {
+        await loadCurrentUser();
+        checkHealth();
+        await loadData();
+        loadMonitoringSummary();
+        loadServices();
+        setInterval(loadMonitoringSummary, 20000);
+    }
+
+    initializeDashboard().catch(err => console.error('Init error', err));
     });
 </script>
 
