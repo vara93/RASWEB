@@ -204,6 +204,69 @@ def _fetch_groups(username: str, upn: str | None = None) -> List[str]:
     return groups
 
 
+def ldap_status(probe_user: str | None = None) -> dict:
+    """Perform a lightweight LDAP bind + optional user lookup to validate connectivity."""
+
+    server = _server()
+    result: dict[str, object] = {
+        "reachable": False,
+        "base_dn": LDAP_BASE_DN,
+        "default_domain": LDAP_DEFAULT_DOMAIN,
+        "netbios_domain": LDAP_NETBIOS_DOMAIN,
+        "probe_user": probe_user,
+        "entries": 0,
+        "user_found": None,
+        "message": "",
+    }
+
+    try:
+        conn = Connection(
+            server,
+            user=LDAP_BIND_DN,
+            password=LDAP_BIND_PASSWORD,
+            auto_bind=True,
+            receive_timeout=10,
+        )
+        result["reachable"] = True
+    except Exception as exc:  # pragma: no cover - network/auth issues
+        msg = f"LDAP bind failed: {exc}"
+        logger.error(msg)
+        result["message"] = msg
+        return result
+
+    if not probe_user:
+        result["message"] = "LDAP bind успешен"
+        return result
+
+    search_filter = (
+        "(&(objectClass=user)(|"
+        f"(sAMAccountName={probe_user})"
+        f"(userPrincipalName={probe_user})"
+        "))"
+    )
+
+    try:
+        conn.search(
+            search_base=LDAP_BASE_DN,
+            search_filter=search_filter,
+            attributes=["sAMAccountName", "userPrincipalName"],
+        )
+        result["entries"] = len(conn.entries)
+        result["user_found"] = bool(conn.entries)
+        result["message"] = (
+            "Пользователь найден" if conn.entries else "Пользователь не найден"
+        )
+        logger.info(
+            "LDAP probe for %s returned %d entries", probe_user, len(conn.entries)
+        )
+    except Exception as exc:  # pragma: no cover - defensive
+        msg = f"LDAP search failed: {exc}"
+        logger.error(msg)
+        result["message"] = msg
+
+    return result
+
+
 def _effective_role_sets() -> dict:
     cfg = _load_custom_groups()
     return {
