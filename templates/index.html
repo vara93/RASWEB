@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1C RAS Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 text-gray-900">
+<div class="min-h-screen flex">
+    <aside class="w-64 bg-gray-900 text-gray-100 flex flex-col">
+        <div class="p-4 text-2xl font-semibold border-b border-gray-800">1C RAS</div>
+        <nav class="flex-1 p-4 space-y-2">
+            <a href="#dashboard" class="block px-3 py-2 rounded hover:bg-gray-800">Dashboard</a>
+            <a href="#infobases" class="block px-3 py-2 rounded hover:bg-gray-800">Информационные базы</a>
+            <a href="#sessions" class="block px-3 py-2 rounded hover:bg-gray-800">Сессии</a>
+            <a href="#processes" class="block px-3 py-2 rounded hover:bg-gray-800">Процессы</a>
+            <a href="#connections" class="block px-3 py-2 rounded hover:bg-gray-800">Соединения</a>
+            <a href="#locks" class="block px-3 py-2 rounded hover:bg-gray-800">Блокировки</a>
+            <a href="#licenses" class="block px-3 py-2 rounded hover:bg-gray-800">Лицензии</a>
+        </nav>
+    </aside>
+
+    <main class="flex-1 p-8 space-y-8">
+        <header class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold">1C RAS Dashboard</h1>
+                <p class="text-gray-500">Мониторинг и управление кластером 1C:Enterprise</p>
+            </div>
+            <div id="health" class="text-sm text-gray-600">Проверка состояния...</div>
+        </header>
+
+        <section id="dashboard" class="space-y-4">
+            <h2 class="text-xl font-semibold">Общий статус</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="summary-cards">
+                <div class="bg-white shadow rounded p-4">
+                    <div class="text-gray-500">Информационные базы</div>
+                    <div class="text-2xl font-bold" id="summary-infobases">-</div>
+                </div>
+                <div class="bg-white shadow rounded p-4">
+                    <div class="text-gray-500">Активные сессии</div>
+                    <div class="text-2xl font-bold" id="summary-sessions">-</div>
+                </div>
+                <div class="bg-white shadow rounded p-4">
+                    <div class="text-gray-500">Процессы</div>
+                    <div class="text-2xl font-bold" id="summary-processes">-</div>
+                </div>
+            </div>
+        </section>
+
+        <section id="infobases" class="space-y-2">
+            <h2 class="text-xl font-semibold">Информационные базы</h2>
+            <div class="bg-white shadow rounded">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Имя</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">UUID</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Описание</th>
+                        </tr>
+                    </thead>
+                    <tbody id="infobases-body" class="divide-y divide-gray-100"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="sessions" class="space-y-2">
+            <h2 class="text-xl font-semibold">Сессии</h2>
+            <div class="bg-white shadow rounded overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Session UUID</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Пользователь</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">ИБ</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Host</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">App</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sessions-body" class="divide-y divide-gray-100"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="processes" class="space-y-2">
+            <h2 class="text-xl font-semibold">Процессы</h2>
+            <div class="bg-white shadow rounded overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">UUID</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Host</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Port</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">PID</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Perf</th>
+                        </tr>
+                    </thead>
+                    <tbody id="processes-body" class="divide-y divide-gray-100"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="connections" class="space-y-2">
+            <h2 class="text-xl font-semibold">Соединения</h2>
+            <div class="bg-white shadow rounded overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">UUID</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Host</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Process</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">ИБ</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Приложение</th>
+                        </tr>
+                    </thead>
+                    <tbody id="connections-body" class="divide-y divide-gray-100"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="locks" class="space-y-2">
+            <h2 class="text-xl font-semibold">Блокировки</h2>
+            <div class="bg-white shadow rounded overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Session</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Connection</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Описание</th>
+                        </tr>
+                    </thead>
+                    <tbody id="locks-body" class="divide-y divide-gray-100"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="licenses" class="space-y-2">
+            <h2 class="text-xl font-semibold">Лицензии по сессиям</h2>
+            <div class="bg-white shadow rounded overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Пользователь</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Host</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Серия</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Тип</th>
+                        </tr>
+                    </thead>
+                    <tbody id="licenses-body" class="divide-y divide-gray-100"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+</div>
+
+<script>
+async function fetchJSON(url) {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+    return res.json();
+}
+
+function setText(id, value) {
+    document.getElementById(id).textContent = value;
+}
+
+function renderTable(bodyId, rows, columns) {
+    const body = document.getElementById(bodyId);
+    body.innerHTML = rows.map(row => {
+        const tds = columns.map(col => `<td class=\"px-4 py-2 text-sm text-gray-700\">${row[col] || ''}</td>`).join('');
+        return `<tr>${tds}</tr>`;
+    }).join('');
+}
+
+async function loadData() {
+    try {
+        const [cluster, infobases, sessions, processes, connections, locks, licenses] = await Promise.all([
+            fetchJSON('/api/cluster'),
+            fetchJSON('/api/infobases'),
+            fetchJSON('/api/sessions'),
+            fetchJSON('/api/processes'),
+            fetchJSON('/api/connections'),
+            fetchJSON('/api/locks'),
+            fetchJSON('/api/licenses'),
+        ]);
+
+        setText('summary-infobases', infobases.infobases.length);
+        setText('summary-sessions', sessions.sessions.length);
+        setText('summary-processes', processes.processes.length);
+
+        renderTable('infobases-body', infobases.infobases, ['name', 'infobase', 'descr']);
+        renderTable('sessions-body', sessions.sessions, ['session', 'user-name', 'infobase', 'host', 'app-id']);
+        renderTable('processes-body', processes.processes, ['process', 'host', 'port', 'pid', 'available-perfomance']);
+        renderTable('connections-body', connections.connections, ['connection', 'host', 'process', 'infobase', 'application']);
+        renderTable('locks-body', locks.locks, ['session', 'connection', 'descr']);
+        renderTable('licenses-body', licenses.licenses, ['user-name', 'host', 'series', 'license-type']);
+    } catch (err) {
+        console.error(err);
+        document.getElementById('health').textContent = `Ошибка загрузки: ${err.message}`;
+        document.getElementById('health').classList.add('text-red-600');
+    }
+}
+
+async function checkHealth() {
+    try {
+        const res = await fetchJSON('/health');
+        const element = document.getElementById('health');
+        element.textContent = `Состояние: ${res.status}`;
+        if (res.status !== 'ok') {
+            element.classList.add('text-yellow-600');
+        } else {
+            element.classList.add('text-green-600');
+        }
+    } catch (err) {
+        const element = document.getElementById('health');
+        element.textContent = `Health check error: ${err.message}`;
+        element.classList.add('text-red-600');
+    }
+}
+
+checkHealth();
+loadData();
+</script>
+</body>
+</html>
