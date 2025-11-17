@@ -36,63 +36,63 @@
                 <p class="text-xl font-semibold text-white">1C RAS</p>
             </div>
         </div>
-        <nav class="flex-1 px-3 py-4 space-y-1">
-            <a href="#dashboard" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all border border-transparent hover:bg-slate-800/50 hover:border-emerald-500/50">
+        <nav class="flex-1 px-3 py-4 space-y-1" id="sidebar-nav">
+            <a href="#dashboard" data-section="dashboard" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all border border-transparent hover:bg-slate-800/50 hover:border-emerald-500/50">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l7.5-9 7.5 9M4.5 10.5v9h15v-9" />
                 </svg>
                 <span class="font-medium">Dashboard</span>
             </a>
-            <a href="#infobases" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all border border-transparent hover:bg-slate-800/50 hover:border-emerald-500/50">
+            <a href="#infobases" data-section="infobases" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all border border-transparent hover:bg-slate-800/50 hover:border-emerald-500/50">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 5.25h16.5m-16.5 6h16.5m-16.5 6h16.5" />
                 </svg>
                 <span class="font-medium">Информационные базы</span>
             </a>
-            <a href="#webpublications" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all border border-transparent hover:bg-slate-800/50 hover:border-emerald-500/50">
+            <a href="#webpublications" data-section="webpublications" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all border border-transparent hover:bg-slate-800/50 hover:border-emerald-500/50">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M5 7h14M5 12h14M5 17h14" />
                 </svg>
                 <span class="font-medium">WEB публикации</span>
             </a>
-            <a href="#monitoring" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all border border-transparent hover:bg-slate-800/50 hover:border-emerald-500/50">
+            <a href="#monitoring" data-section="monitoring" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all border border-transparent hover:bg-slate-800/50 hover:border-emerald-500/50">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3v2.25M14.25 3v2.25M4.5 9.75h15m-13.5 3h12M6.75 21v-6.75m10.5 6.75v-6.75M6 3h12a1.5 1.5 0 011.5 1.5v15A1.5 1.5 0 0118 21H6a1.5 1.5 0 01-1.5-1.5v-15A1.5 1.5 0 016 3z" />
                 </svg>
                 <span class="font-medium">Мониторинг и диагностика</span>
             </a>
-            <a href="#groups" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all border border-transparent hover:bg-slate-800/50 hover:border-emerald-500/50">
+            <a href="#groups" data-section="groups" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all border border-transparent hover:bg-slate-800/50 hover:border-emerald-500/50">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0z" />
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 14a7 7 0 00-6.938 6h13.876A7 7 0 0012 14z" />
                 </svg>
                 <span class="font-medium">Группы доступа</span>
             </a>
-            <a href="#sessions" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all border border-transparent hover:bg-slate-800/50 hover:border-emerald-500/50">
+            <a href="#sessions" data-section="sessions" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all border border-transparent hover:bg-slate-800/50 hover:border-emerald-500/50">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.25a7.5 7.5 0 0115 0" />
                 </svg>
                 <span class="font-medium">Сессии</span>
             </a>
-            <a href="#processes" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all border border-transparent hover:bg-slate-800/50 hover:border-emerald-500/50">
+            <a href="#processes" data-section="processes" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all border border-transparent hover:bg-slate-800/50 hover:border-emerald-500/50">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 6.75h15m-15 10.5h15M9.75 4.5v15m4.5-15v15" />
                 </svg>
                 <span class="font-medium">Процессы</span>
             </a>
-            <a href="#connections" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all border border-transparent hover:bg-slate-800/50 hover:border-emerald-500/50">
+            <a href="#connections" data-section="connections" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all border border-transparent hover:bg-slate-800/50 hover:border-emerald-500/50">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 7.5A3.75 3.75 0 0110.5 3.75h3a3.75 3.75 0 010 7.5h-3a3.75 3.75 0 010-7.5h3m-3 7.5a3.75 3.75 0 100 7.5h3a3.75 3.75 0 000-7.5h-3z" />
                 </svg>
                 <span class="font-medium">Соединения</span>
             </a>
-            <a href="#locks" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all border border-transparent hover:bg-slate-800/50 hover:border-emerald-500/50">
+            <a href="#locks" data-section="locks" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all border border-transparent hover:bg-slate-800/50 hover:border-emerald-500/50">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6a4.5 4.5 0 00-9 0v4.5M6.75 10.5h10.5A1.75 1.75 0 0119 12.25v6A1.75 1.75 0 0117.25 20H6.75A1.75 1.75 0 015 18.25v-6A1.75 1.75 0 016.75 10.5z" />
                 </svg>
                 <span class="font-medium">Блокировки</span>
             </a>
-            <a href="#licenses" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all border border-transparent hover:bg-slate-800/50 hover:border-emerald-500/50">
+            <a href="#licenses" data-section="licenses" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all border border-transparent hover:bg-slate-800/50 hover:border-emerald-500/50">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 6.75V6A1.5 1.5 0 016 4.5h4.75A2.75 2.75 0 0113.5 7.25v9.5a2.75 2.75 0 01-2.75 2.75H6A1.5 1.5 0 014.5 18v-.75M9 9h3.75M9 12h3.75" />
                     <path stroke-linecap="round" stroke-linejoin="round" d="M17.25 9.75V9a1.5 1.5 0 00-1.5-1.5h-2.25M14.25 15H18a.75.75 0 01.75.75v1.5a.75.75 0 01-.75.75h-3.75" />
@@ -147,7 +147,7 @@
 
         <main class="p-6 md:p-8 space-y-6">
             <!-- KPI Cards -->
-            <section id="dashboard">
+            <section id="dashboard" class="content-section">
                 <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
                     <div class="bg-white rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all">
                         <div class="flex items-center justify-between">
@@ -184,7 +184,7 @@
                 </div>
             </section>
 
-            <section id="monitoring" class="space-y-4">
+            <section id="monitoring" class="content-section space-y-4 hidden">
                 <div class="flex items-center justify-between">
                     <div>
                         <h2 class="text-2xl font-semibold text-slate-900">Мониторинг и диагностика</h2>
@@ -260,7 +260,7 @@
             </section>
 
             <!-- Panels -->
-            <section id="infobases" class="space-y-4">
+            <section id="infobases" class="content-section space-y-4 hidden">
                 <div class="bg-white rounded-xl p-6 shadow hover:shadow-lg transition-all">
                     <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-200">
                         <h2 class="text-xl font-semibold text-slate-800">Информационные базы</h2>
@@ -286,7 +286,7 @@
             </section>
 
             <!-- WEB Publications placed directly after Infobases -->
-            <section id="webpublications" class="space-y-4">
+            <section id="webpublications" class="content-section space-y-4 hidden">
                 <div class="bg-white rounded-xl p-6 shadow hover:shadow-lg transition-all">
                     <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-200">
                         <h2 class="text-xl font-semibold text-slate-800">WEB публикации</h2>
@@ -313,25 +313,39 @@
                 </div>
             </section>
 
-            <section id="groups" class="space-y-4">
+            <section id="groups" class="content-section space-y-4 hidden">
                 <div class="bg-white rounded-xl p-6 shadow hover:shadow-lg transition-all">
-                    <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-200">
-                        <div>
-                            <h2 class="text-xl font-semibold text-slate-800">Группы доступа</h2>
-                            <p class="text-sm text-slate-500">Добавляйте пользователей или группы AD к ролям Admin / Support / Read</p>
-                        </div>
-                        <div class="text-sm text-slate-500" id="groups-meta">—</div>
-                    </div>
-                    <div class="space-y-4">
-                        <div class="border border-slate-200 rounded-2xl p-4 bg-white shadow-sm">
-                            <div class="flex items-center justify-between mb-4">
-                                <div>
-                                    <p class="text-xs uppercase tracking-wide text-slate-500">Конфигурация подключения к LDAP</p>
-                                    <p class="text-sm text-slate-600">Укажите сервисную учетную запись для поиска групп AD</p>
-                                </div>
-                                <span id="ldap-config-state" class="text-xs px-3 py-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200">—</span>
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4 pb-2 border-b border-slate-200">
+                        <div class="flex items-center gap-3">
+                            <div class="h-10 w-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-inner">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 20.25a7.5 7.5 0 0115 0" />
+                                </svg>
                             </div>
-                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                            <div>
+                                <p class="text-xs uppercase tracking-wide text-slate-500">Группы доступа</p>
+                                <h2 class="text-xl font-semibold text-slate-800">Роли Admin / Support / Read</h2>
+                                <p class="text-sm text-slate-500">Назначайте пользователей и группы Active Directory</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 text-sm text-slate-500">
+                            <span class="text-xs px-3 py-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200" id="groups-meta">—</span>
+                        </div>
+                    </div>
+                    <div class="grid gap-4 lg:grid-cols-3">
+                        <div class="lg:col-span-2 border border-slate-200 rounded-2xl p-4 bg-white shadow-sm">
+                            <div class="flex flex-col gap-3">
+                                <div class="flex items-start justify-between gap-3">
+                                    <div>
+                                        <p class="text-xs uppercase tracking-wide text-slate-500">Конфигурация подключения к LDAP</p>
+                                        <p class="text-sm text-slate-600">Сервисная УЗ и адрес каталога</p>
+                                    </div>
+                                    <span id="ldap-config-state" class="text-xs px-3 py-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200">—</span>
+                                </div>
+                                <div id="ldap-config-message" class="hidden px-3 py-2 rounded-xl text-sm bg-slate-50 text-slate-600 flex items-center gap-2"></div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mt-3">
                                 <div class="space-y-2">
                                     <label class="text-xs font-semibold text-slate-600">Сервер</label>
                                     <input id="ldap-server" type="text" class="w-full rounded-xl border border-slate-200 px-3 py-2 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none text-sm" placeholder="ldap.example.com" />
@@ -341,7 +355,7 @@
                                     <input id="ldap-port" type="number" class="w-full rounded-xl border border-slate-200 px-3 py-2 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none text-sm" placeholder="389" />
                                 </div>
                                 <div class="space-y-2">
-                                    <label class="text-xs font-semibold text-slate-600">Сервисная УЗ (bind DN)</label>
+                                    <label class="text-xs font-semibold text-slate-600">Bind DN</label>
                                     <input id="ldap-bind-dn" type="text" class="w-full rounded-xl border border-slate-200 px-3 py-2 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none text-sm" placeholder="svc_account@domain.local" />
                                 </div>
                                 <div class="space-y-2">
@@ -355,8 +369,9 @@
                             </div>
                             <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 mt-4 text-sm text-slate-600">
                                 <p id="ldap-password-hint" class="text-xs text-slate-500">Пароль не задан</p>
-                                <div class="flex items-center gap-3">
+                                <div class="flex flex-wrap items-center gap-2">
                                     <button id="ldap-config-refresh" class="px-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm hover:shadow transition text-sm">Обновить</button>
+                                    <button id="ldap-config-test" class="px-3 py-2 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-700 shadow-sm hover:shadow transition text-sm">Проверить</button>
                                     <button id="ldap-config-save" class="px-4 py-2 rounded-xl bg-emerald-500 text-white shadow hover:shadow-md text-sm">Сохранить</button>
                                 </div>
                             </div>
@@ -386,12 +401,12 @@
                                 <p id="ldap-probe-result" class="text-sm text-slate-500">—</p>
                             </div>
                         </div>
-                        <div id="group-cards" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
                     </div>
+                    <div id="group-cards" class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4"></div>
                 </div>
             </section>
 
-            <section id="sessions" class="space-y-4">
+            <section id="sessions" class="content-section space-y-4 hidden">
                 <div class="bg-white rounded-xl p-6 shadow hover:shadow-lg transition-all">
                     <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-200">
                         <h2 class="text-xl font-semibold text-slate-800">Сессии</h2>
@@ -416,7 +431,7 @@
                 </div>
             </section>
 
-            <section id="processes" class="space-y-4">
+            <section id="processes" class="content-section space-y-4 hidden">
                 <div class="bg-white rounded-xl p-6 shadow hover:shadow-lg transition-all">
                     <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-200">
                         <h2 class="text-xl font-semibold text-slate-800">Процессы</h2>
@@ -441,7 +456,7 @@
                 </div>
             </section>
 
-            <section id="connections" class="space-y-4">
+            <section id="connections" class="content-section space-y-4 hidden">
                 <div class="bg-white rounded-xl p-6 shadow hover:shadow-lg transition-all">
                     <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-200">
                         <h2 class="text-xl font-semibold text-slate-800">Соединения</h2>
@@ -466,7 +481,7 @@
                 </div>
             </section>
 
-            <section id="locks" class="space-y-4">
+            <section id="locks" class="content-section space-y-4 hidden">
                 <div class="bg-white rounded-xl p-6 shadow hover:shadow-lg transition-all">
                     <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-200">
                         <h2 class="text-xl font-semibold text-slate-800">Блокировки</h2>
@@ -489,7 +504,7 @@
                 </div>
             </section>
 
-            <section id="licenses" class="space-y-4 pb-8">
+            <section id="licenses" class="content-section space-y-4 pb-8 hidden">
                 <div class="bg-white rounded-xl p-6 shadow hover:shadow-lg transition-all">
                     <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-200">
                         <h2 class="text-xl font-semibold text-slate-800">Лицензии по сессиям</h2>
@@ -568,6 +583,55 @@
     let groupConfig = null;
     let ldapConfig = null;
     let ldapStatusInfo = null;
+
+    const contentSections = Array.from(document.querySelectorAll('section.content-section'));
+    const navLinks = Array.from(document.querySelectorAll('#sidebar-nav a[data-section]'));
+
+    function setActiveSection(targetId) {
+        if (!contentSections.length) return;
+        const availableIds = contentSections.map(section => section.id);
+        const resolvedId = availableIds.includes(targetId) ? targetId : availableIds[0];
+
+        contentSections.forEach(section => {
+            if (section.id === resolvedId) {
+                section.classList.remove('hidden');
+            } else {
+                section.classList.add('hidden');
+            }
+        });
+
+        navLinks.forEach(link => {
+            const isActive = link.dataset.section === resolvedId;
+            link.classList.toggle('bg-slate-800/50', isActive);
+            link.classList.toggle('border-emerald-500/50', isActive);
+            link.classList.toggle('text-white', isActive);
+        });
+
+        if (resolvedId) {
+            history.replaceState(null, '', `#${resolvedId}`);
+        }
+    }
+
+    function setupNavigation() {
+        if (!contentSections.length) return;
+        const initialHash = (window.location.hash || '').replace('#', '');
+        setActiveSection(initialHash || contentSections[0].id);
+
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const target = link.getAttribute('data-section');
+                if (target) {
+                    setActiveSection(target);
+                }
+            });
+        });
+
+        window.addEventListener('hashchange', () => {
+            const newHash = (window.location.hash || '').replace('#', '');
+            setActiveSection(newHash || contentSections[0].id);
+        });
+    }
 
     function normalizeRoleEntry(entry) {
         if (!entry) return { groups: [], users: [] };
@@ -783,7 +847,47 @@
         });
     }
 
-    function renderLdapConfigForm(message = '') {
+    function updateLdapConfigMessage(text = '', tone = 'info') {
+        const banner = document.getElementById('ldap-config-message');
+        if (!banner) return;
+
+        const base = 'flex items-center gap-2 px-3 py-2 rounded-xl text-sm border';
+        if (!text) {
+            banner.className = `hidden ${base}`;
+            banner.innerHTML = '';
+            return;
+        }
+
+        const palette = {
+            success: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+            error: 'bg-red-50 text-red-700 border-red-200',
+            warning: 'bg-amber-50 text-amber-700 border-amber-200',
+            info: 'bg-slate-50 text-slate-600 border-slate-200',
+        };
+        const dot = {
+            success: 'bg-emerald-500',
+            error: 'bg-red-500',
+            warning: 'bg-amber-500',
+            info: 'bg-slate-400',
+        };
+        const colorClass = palette[tone] || palette.info;
+        const dotClass = dot[tone] || dot.info;
+        banner.className = `${base} ${colorClass}`;
+        banner.innerHTML = `<span class="h-2 w-2 rounded-full ${dotClass}"></span><span>${text}</span>`;
+    }
+
+    function validateLdapPayload(payload) {
+        const errors = [];
+        if (!payload.server) errors.push('Укажите сервер LDAP');
+        if (!payload.port || Number.isNaN(Number(payload.port)) || payload.port <= 0 || payload.port > 65535) {
+            errors.push('Порт должен быть в диапазоне 1-65535');
+        }
+        if (!payload.bind_dn) errors.push('Укажите сервисную учетную запись (Bind DN)');
+        if (!payload.base_dn) errors.push('Укажите Base DN');
+        return errors;
+    }
+
+    function renderLdapConfigForm(message = '', tone = 'info') {
         const serverInput = document.getElementById('ldap-server');
         const portInput = document.getElementById('ldap-port');
         const bindInput = document.getElementById('ldap-bind-dn');
@@ -794,6 +898,8 @@
         const saveBtn = document.getElementById('ldap-config-save');
         const refreshBtn = document.getElementById('ldap-config-refresh');
         const isAdmin = hasRole('Admin');
+
+        updateLdapConfigMessage(message, tone);
 
         const disableFields = !isAdmin;
         [serverInput, portInput, bindInput, passwordInput, baseDnInput, saveBtn, refreshBtn].forEach(el => {
@@ -824,8 +930,11 @@
                 stateBadge.textContent = 'Нет доступа';
                 stateBadge.className = 'text-xs px-3 py-1 rounded-full bg-slate-100 text-slate-500 border border-slate-200';
             } else if (message) {
+                const badgeTone = tone === 'error' ? 'bg-red-50 text-red-700 border-red-200'
+                    : tone === 'warning' ? 'bg-amber-50 text-amber-700 border-amber-200'
+                        : 'bg-emerald-50 text-emerald-700 border-emerald-200';
                 stateBadge.textContent = message;
-                stateBadge.className = 'text-xs px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200';
+                stateBadge.className = `text-xs px-3 py-1 rounded-full ${badgeTone}`;
             } else if (ldapConfig) {
                 stateBadge.textContent = 'Настроено';
                 stateBadge.className = 'text-xs px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200';
@@ -856,7 +965,7 @@
         } catch (err) {
             console.error('Ошибка загрузки конфигурации LDAP', err);
             ldapConfig = null;
-            renderLdapConfigForm(err?.message || 'Ошибка загрузки');
+            renderLdapConfigForm(err?.message || 'Ошибка загрузки', 'error');
         }
     }
 
@@ -879,6 +988,14 @@
             payload.password = passwordInput.value;
         }
 
+        const validationErrors = validateLdapPayload(payload);
+        if (validationErrors.length) {
+            updateLdapConfigMessage(validationErrors.join('. '), 'error');
+            return;
+        }
+
+        updateLdapConfigMessage('Сохраняем конфигурацию...', 'info');
+
         try {
             const res = await fetchJSON('/auth/ldap/config', {
                 method: 'POST',
@@ -887,11 +1004,35 @@
             });
             ldapConfig = res.config || res;
             if (passwordInput) passwordInput.value = '';
-            renderLdapConfigForm('Сохранено');
+            renderLdapConfigForm('Сохранено', 'success');
             await loadLdapStatus();
         } catch (err) {
             console.error('Ошибка сохранения LDAP', err);
-            renderLdapConfigForm(err?.message || 'Ошибка сохранения');
+            renderLdapConfigForm(err?.message || 'Ошибка сохранения', 'error');
+        }
+    }
+
+    async function testLdapConfig() {
+        if (!hasRole('Admin')) return;
+
+        const payload = {
+            server: document.getElementById('ldap-server')?.value?.trim() || '',
+            port: Number(document.getElementById('ldap-port')?.value || 389) || 389,
+            bind_dn: document.getElementById('ldap-bind-dn')?.value?.trim() || '',
+            base_dn: document.getElementById('ldap-base-dn')?.value?.trim() || '',
+        };
+        const validationErrors = validateLdapPayload(payload);
+        if (validationErrors.length) {
+            updateLdapConfigMessage(validationErrors.join('. '), 'error');
+            return;
+        }
+
+        updateLdapConfigMessage('Проверяем подключение...', 'info');
+        await loadLdapStatus();
+        if (ldapStatusInfo?.reachable) {
+            updateLdapConfigMessage(ldapStatusInfo.message || 'LDAP bind успешен', 'success');
+        } else {
+            updateLdapConfigMessage(ldapStatusInfo?.message || 'Нет соединения с LDAP, проверьте настройки', 'error');
         }
     }
 
@@ -1762,10 +1903,17 @@
         ldapConfigSave.addEventListener('click', () => saveLdapConfig());
     }
 
+    const ldapConfigTest = document.getElementById('ldap-config-test');
+    if (ldapConfigTest) {
+        ldapConfigTest.addEventListener('click', () => testLdapConfig());
+    }
+
     const ldapConfigRefresh = document.getElementById('ldap-config-refresh');
     if (ldapConfigRefresh) {
         ldapConfigRefresh.addEventListener('click', () => loadLdapConfigForm());
     }
+
+    setupNavigation();
 
     async function initializeDashboard() {
         await loadCurrentUser();
@@ -1802,7 +1950,13 @@
         <form id="login-form" class="space-y-4">
             <div class="space-y-2">
                 <label class="text-sm font-medium text-slate-700">Пользователь</label>
-                <input name="username" type="text" required class="w-full rounded-xl border border-slate-200 px-3 py-2 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none" placeholder="user@fd.local или DOMAIN\\user" />
+                <div class="relative">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 20.25a7.5 7.5 0 0115 0" />
+                    </svg>
+                    <input name="username" type="text" required class="w-full rounded-xl border border-slate-200 pl-10 pr-3 py-2 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none" placeholder="user@fd.local или DOMAIN\\user" />
+                </div>
             </div>
             <div class="space-y-2">
                 <label class="text-sm font-medium text-slate-700">Пароль</label>
